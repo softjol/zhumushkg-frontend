@@ -1,9 +1,10 @@
-import { JobDetailPage } from "@/page/job-detail/ui/JobDetailPage";
+import { JobDetailPage } from '@/page/job-detail/ui/JobDetailPage'
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>
 }
+export default async function JobDetail({ params }: Props) {
+  const { id } = await params
 
-export default function JobDetail({ params }: Props) {
-  return <JobDetailPage jobId={params.id} />;
+  return <JobDetailPage jobId={Number(id)} />
 }

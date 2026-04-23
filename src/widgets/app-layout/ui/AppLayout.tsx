@@ -1,5 +1,4 @@
 'use client'
-
 import { ReactNode } from 'react'
 import { useAppLayout } from '../model/use-app-layout'
 import { Sidebar } from '../../sidebar'
@@ -21,7 +20,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="relative flex-1  flex flex-col min-h-screen overflow-x-hidden mb-[72px] lg:mb-0">
         {children}
       </div>
-      
+
       {/* Mobile Bottom Navigation */}
       <BottomNav navItems={navItems} />
     </div>

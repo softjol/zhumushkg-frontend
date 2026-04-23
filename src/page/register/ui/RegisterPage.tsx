@@ -9,26 +9,26 @@ import { ArrowLeft } from 'lucide-react'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/shared/ui/input-otp'
 import iconLogo from '@/assets/icons/Logo.svg'
 import Image from 'next/image'
+import { registerUser, confirmPhone } from '@/entities/auth/api'
+import { useUserStore } from '@/entities/user/model/store'
 
 export const RegisterPage = () => {
   const router = useRouter()
+  const { setToken } = useUserStore()
+
   const [step, setStep] = useState<'phone' | 'otp'>('phone')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
   const [timer, setTimer] = useState(59)
   const [error, setError] = useState('')
-  const [attempts, setAttempts] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const isPhoneValid = phone.replace(/\D/g, '').length === 10
+  const isPhoneValid = phone.replace(/\D/g, '').length === 9
   const isNameValid = name.trim().length >= 2
   const isFormValid = isPhoneValid && isNameValid
 
-  const handleSendCode = () => {
-    if (!isFormValid) return
-    setStep('otp')
-    setOtp('')
-    setError('')
+  const startTimer = () => {
     setTimer(59)
     const interval = setInterval(() => {
       setTimer((t) => {
@@ -41,21 +41,38 @@ export const RegisterPage = () => {
     }, 1000)
   }
 
-  const handleVerify = () => {
-    if (otp.length < 4) return
+  const [smsCode, setSmsCode] = useState('')
 
-    if (otp === '0000') {
-      const remaining = 2 - attempts
-      if (attempts >= 2) {
-        setError('Слишком много попыток. Попробуйте через 10 минут')
-      } else {
-        setError(`Неверный код, осталось ${remaining} попыток`)
-        setAttempts((prev) => prev + 1)
-      }
-      return
+  const handleSendCode = async () => {
+    if (!isFormValid) return
+    setIsLoading(true)
+    setError('')
+    try {
+      const data = await registerUser(name.trim(), '+996' + phone)
+      if (data.smsCode) setSmsCode(data.smsCode) // сохраняем код
+      setStep('otp')
+      setOtp('')
+      startTimer()
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    router.push('/')
+  const handleVerify = async () => {
+    if (otp.length < 4) return
+    setIsLoading(true)
+    setError('')
+    try {
+      const token = await confirmPhone('+996' + phone, otp) // возвращает строку
+      setToken(token)
+      router.push('/jobs')
+    } catch (e: any) {
+      setError(e.message || 'Неверный код')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -77,7 +94,6 @@ export const RegisterPage = () => {
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
         <div className="w-full max-w-sm" key={step}>
-          {/* Logo */}
           <div className="flex items-center justify-center gap-2 mb-10">
             <div className="text-[38px] flex items-center font-bold">
               Ж
@@ -95,7 +111,6 @@ export const RegisterPage = () => {
                 Заполните данные для регистрации
               </p>
 
-              {/* Name field — only on register */}
               <Input
                 type="text"
                 placeholder="Ваше имя"
@@ -119,22 +134,24 @@ export const RegisterPage = () => {
                 />
               </div>
 
+              {error && <p className="text-sm text-destructive text-center mt-3">{error}</p>}
+
               <Button
                 className="w-full mt-4 rounded-2xl h-12 text-base"
-                disabled={!isFormValid}
+                disabled={!isFormValid || isLoading}
                 onClick={handleSendCode}
               >
-                Получить код
+                {isLoading ? 'Отправка...' : 'Получить код'}
               </Button>
 
-              <p className="text-xs text-muted-foreground text-center mt-4">
+              <p className="text-sm text-muted-foreground text-center mt-4">
                 Уже есть аккаунт?{' '}
                 <Link href="/login" className="text-primary font-medium hover:underline">
                   Войти
                 </Link>
               </p>
 
-              <p className="text-xs text-muted-foreground text-center mt-2">
+              <p className="text-sm text-muted-foreground text-center mt-2">
                 Нажимая «Получить код», вы соглашаетесь с{' '}
                 <a href="#" className="text-primary hover:underline">
                   Политикой конфиденциальности
@@ -146,6 +163,12 @@ export const RegisterPage = () => {
               <h1 className="text-xl font-bold text-foreground text-center mb-2">Введите код</h1>
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
                 Код отправлен на +996 {phone}
+                {smsCode && (
+                  <>
+                    <br />
+                    (для тестирования: {smsCode})
+                  </>
+                )}
               </p>
 
               <div className="flex justify-center mb-4">
@@ -163,10 +186,10 @@ export const RegisterPage = () => {
 
               <Button
                 className="w-full rounded-2xl h-12 text-base"
-                disabled={otp.length < 4}
+                disabled={otp.length < 4 || isLoading}
                 onClick={handleVerify}
               >
-                Подтвердить
+                {isLoading ? 'Проверка...' : 'Подтвердить'}
               </Button>
 
               <p className="text-sm text-muted-foreground text-center mt-4">

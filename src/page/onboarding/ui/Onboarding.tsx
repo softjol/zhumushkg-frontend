@@ -75,10 +75,10 @@ export const OnboardingPage = () => {
         {/* Buttons */}
         <div className="mt-10 space-y-3">
           <Link href="/login" className="w-full block">
-            <Button className="w-full rounded-xl h-12 text-base">Войти</Button>
+            <Button className="w-full rounded-2xl h-12 text-base">Войти</Button>
           </Link>
           <Link href="/register" className="w-full block">
-            <Button variant="outline" className="w-full rounded-xl h-12 text-base">
+            <Button variant="outline" className="w-full rounded-2xl h-12 text-base">
               Зарегистрироваться
             </Button>
           </Link>

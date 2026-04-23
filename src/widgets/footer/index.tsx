@@ -21,7 +21,7 @@ const FooterLink = ({ to, label, protected: isProtected }: FooterLinkProps) => {
   const handleClick = (e: React.MouseEvent) => {
     if (isProtected && !isLoggedIn) {
       e.preventDefault()
-      router.push(`/auth?redirect=${to}`)
+      router.push(`/onboarding`)
     }
   }
 

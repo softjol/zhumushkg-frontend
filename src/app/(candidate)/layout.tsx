@@ -1,3 +1,4 @@
+'use client'
 import { AppLayout } from '@/widgets/app-layout/ui/AppLayout'
 
 export default function CandidateLayout({ children }: Readonly<{

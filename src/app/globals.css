@@ -32,9 +32,9 @@
   --color-secondary-foreground: hsl(0 0% 100%);
 
   /* Colors - Muted */
-  --color-muted: hsl(0 0% 95%);
-  --color-muted-foreground: hsl(0 0% 36%);
 
+  --color-muted: hsl(222 71% 97%);
+  --color-muted-foreground: hsl(222 16% 47%);
   /* Colors - Accent */
   --color-accent: hsl(0 0% 96%);
   --color-accent-foreground: hsl(0 0% 15%);
@@ -271,4 +271,9 @@
   .aspect-video {
     @apply aspect-video;
   }
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
 }

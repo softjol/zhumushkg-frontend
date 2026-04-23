@@ -1,22 +1,21 @@
 export interface Job {
-  id: string;
-  title: string;
-  company: string;
-  companyLogo?: string;
-  city: string;
-  salary?: string;
-  salaryPeriod?: string;
-  date: string;
-  views: number;
-  likes: number;
-  category: string;
-  experience: string;
-  schedule: string;
-  remote: boolean;
-  description?: string;
-  responsibilities?: string[];
-  requirements?: string[];
-  conditions?: string[];
-  address?: string;
-  isFavorite?: boolean;
+  id: number
+  user_id: number
+  profession: string      // категория: "Информационные технологии"
+  position: string        // название: "Middle Node.js Developer"
+  work_schedule: string   // "Полный день, 5/2"
+  requir_respons: string  // требования/обязанности
+  experience_work: string // "От 3 до 5 лет"
+  remote_work: boolean
+  city: string
+  work_address: string
+  region: string
+  payment_period: string  // "Ежемесячно"
+  salary_net: string      // "180000.00"
+  views: number
+  favorite: number
+  offers: number
+  company: string
+  createdAt: string
+  updatedAt: string
 }

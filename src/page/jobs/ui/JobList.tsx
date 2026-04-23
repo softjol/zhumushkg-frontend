@@ -1,37 +1,78 @@
 'use client'
-import { Input } from '@/shared/ui/input'
 import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
-import { jobsData } from '../model/mockData'
-import { useState } from 'react'
-import { MobileSearchBar } from '@/features/search-bar/ui/MobileSearchBar'
 import { JobCard } from '@/entities/job/ui/JobCard'
+import { useState, useEffect } from 'react'
+import { Job } from '@/entities/job/model/types'
+import { getVacancies } from '@/entities/job/api'
+import { SearchBar } from '@/features/search-bar/ui/SearchBar'
+import { useUserStore } from '@/entities/user/model/store'
+import { getFavorites } from '@/entities/favorites/api'
+import { useFavoritesStore } from '@/entities/favorites/model/store'
 
 type Props = {}
 
 export const JobList = ({}: Props) => {
-  const [activeCategory, setActiveCategory] = useState('all')
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [favoritesMap, setFavoritesMap] = useState<Map<number, number>>(new Map())
+  const { isAuthenticated } = useUserStore.getState()
+  const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const jobsPerPage = 9
 
-  const filteredJobs =
-    activeCategory === 'all' ? jobsData : jobsData.filter((j) => j.category === activeCategory)
+  const { setFavorites } = useFavoritesStore()
 
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage)
-  const indexOfLastJob = currentPage * jobsPerPage
-  const indexOfFirstJob = indexOfLastJob - jobsPerPage
-  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob)
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getVacancies()
+        setJobs(data)
 
+        if (isAuthenticated) {
+          const favorites = await getFavorites()
+          setFavorites(new Map(favorites.map((f) => [f.vacancy_id, f.id])))
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [isAuthenticated])
+
+  const currentJobs = jobs.slice((currentPage - 1) * jobsPerPage, currentPage * jobsPerPage)
+  const totalPages = Math.ceil(jobs.length / jobsPerPage)
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0 })
   }
+  const handleFavoriteChange = (vacancyId: number, favoriteId: number | null) => {
+    setFavoritesMap((prev) => {
+      const next = new Map(prev)
+      if (favoriteId === null) {
+        next.delete(vacancyId)
+      } else {
+        next.set(vacancyId, favoriteId)
+      }
+      return next
+    })
+  }
+  if (loading) return <p className="text-center py-10">Загрузка...</p>
 
   return (
     <div className="w-full overflow-hidden">
-      <MobileSearchBar />
-      <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="lg:hidden block">
+        <SearchBar />
+      </div>
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-3">
         {currentJobs.map((job) => (
-          <JobCard key={job.id} job={job} />
+          <JobCard
+            key={job.id}
+            job={job}
+            isFavProps={favoritesMap.has(job.id)}
+            favoriteIdProps={favoritesMap.get(job.id) ?? null}
+            onFavoriteChange={handleFavoriteChange}
+          />
         ))}
       </div>
 

@@ -12,7 +12,7 @@ export const ROUTES = {
     JOB_DETAIL: (id: string) => `/jobs/${id}`,
     FAVORITES: '/favorites',
     APPLICATIONS: '/applications',
-    CHAT: '/chat',
+    CHAT: '/',
     CHAT_DETAIL: (id: string) => `/chat/${id}`,
     NOTIFICATIONS: '/notifications',
     PROFILE: '/profile',
