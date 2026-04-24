@@ -6,9 +6,12 @@ import { Textarea } from '@/shared/ui/textarea'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/shared/lib/utils'
+import { useResumeStore } from '@/entities/resume/model/store'
+import { updateResume } from '@/entities/resume/api'
+import type { WorkExperience } from '@/entities/resume/model/types'
 
 const months = [
   'Январь',
@@ -25,60 +28,111 @@ const months = [
   'Декабрь',
 ]
 
+// Локальный тип: skills как строка для инпута
+type FormState = {
+  position: string
+  description: string
+  work_schedule: string
+  payment_period: string
+  salary_net: number
+  birth_date: string
+  phone_number: string
+  city: string
+  education: string
+  work_experience: WorkExperience[]
+  skills: string // строка для отображения в инпуте
+  personal_qualities: string
+  photo: string
+}
+
+// Resume из стора хранит skills как string[] — конвертируем в строку для формы
+function resumeToFormState(resume: any): FormState {
+  return {
+    position: resume.position ?? '',
+    description: resume.description ?? '',
+    work_schedule: resume.work_schedule ?? '',
+    payment_period: resume.payment_period ?? '',
+    salary_net: Number(resume.salary_net) ?? 0,
+    birth_date: resume.birth_date ?? '',
+    phone_number: resume.phone_number ?? '',
+    city: resume.city ?? '',
+    education: resume.education ?? '',
+    work_experience: resume.work_experience ?? [],
+    skills: Array.isArray(resume.skills) ? resume.skills.join(', ') : (resume.skills ?? ''),
+    personal_qualities: resume.personal_qualities ?? '',
+    photo: resume.photo ?? 'https://example.com/photo.jpg',
+  }
+}
+
 export const ResumeEditPage = () => {
   const router = useRouter()
-
-  const [formData, setFormData] = useState<any>(null)
+  const { resume, setResume } = useResumeStore()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState<FormState | null>(null)
 
   useEffect(() => {
-    const savedData = localStorage.getItem('resume_data')
-    if (savedData) {
-      setFormData(JSON.parse(savedData))
+    if (resume) {
+      setFormData(resumeToFormState(resume))
     } else {
       router.push('/resume/create')
     }
-  }, [router])
+  }, [resume])
 
-  const updateField = (field: string, value: any) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }))
+  // Исходное состояние для сравнения — пересчитывается только когда resume меняется
+  const initialFormState = useMemo(() => (resume ? resumeToFormState(resume) : null), [resume])
+
+  // Проверка: изменилось ли что-нибудь
+  const isChanged = useMemo(() => {
+    if (!formData || !initialFormState) return false
+    return JSON.stringify(formData) !== JSON.stringify(initialFormState)
+  }, [formData, initialFormState])
+
+  const updateField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
+    setFormData((prev) => (prev ? { ...prev, [field]: value } : prev))
   }
 
   const addExperience = () => {
-    setFormData((prev: any) => ({
-      ...prev,
-      work_experience: [
-        ...prev.work_experience,
-        {
-          company: '',
-          position: '',
-          start_month: 1,
-          start_year: 2024,
-          until_now: false,
-          description: '',
-        },
-      ],
-    }))
+    const newExp: WorkExperience = {
+      company: '',
+      position: '',
+      start_month: 1,
+      start_year: new Date().getFullYear(),
+      until_now: false,
+      description: '',
+    }
+    setFormData((prev) =>
+      prev ? { ...prev, work_experience: [...prev.work_experience, newExp] } : prev,
+    )
   }
 
   const removeExperience = (index: number) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      work_experience: prev.work_experience.filter((_: any, i: number) => i !== index),
-    }))
+    setFormData((prev) =>
+      prev
+        ? { ...prev, work_experience: prev.work_experience.filter((_, i) => i !== index) }
+        : prev,
+    )
   }
 
-  const updateExperience = (index: number, field: string, value: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      work_experience: prev.work_experience.map((exp: any, i: number) =>
-        i === index ? { ...exp, [field]: value } : exp,
-      ),
-    }))
+  const updateExperience = <K extends keyof WorkExperience>(
+    index: number,
+    field: K,
+    value: WorkExperience[K],
+  ) => {
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            work_experience: prev.work_experience.map((exp, i) =>
+              i === index ? { ...exp, [field]: value } : exp,
+            ),
+          }
+        : prev,
+    )
   }
 
-  const isFormValid = () => {
+  const isFormValid = (): boolean => {
     if (!formData) return false
-    return (
+    return Boolean(
       formData.position &&
       formData.work_schedule &&
       formData.payment_period &&
@@ -89,19 +143,38 @@ export const ResumeEditPage = () => {
       formData.education &&
       formData.description &&
       formData.skills &&
-      formData.personal_qualities
+      formData.personal_qualities,
     )
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isFormValid()) return
+    if (!isFormValid() || isSubmitting || !resume || !formData || !isChanged) return
 
-    localStorage.setItem('resume_data', JSON.stringify(formData))
-    router.push('/resume')
+    setIsSubmitting(true)
+    try {
+      const payload = {
+        ...formData,
+        skills: formData.skills
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      }
+
+      const updated = await updateResume(resume.id, payload)
+      setResume(updated)
+      router.push('/resume')
+    } catch (err) {
+      console.error(err)
+      // TODO: toast об ошибке
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (!formData) return null
+
+  const canSubmit = isFormValid() && isChanged && !isSubmitting
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)] lg:min-h-screen bg-background">
@@ -132,8 +205,8 @@ export const ResumeEditPage = () => {
             <div className="space-y-2">
               <Label className="text-base">График работы</Label>
               <Select
-                onValueChange={(v) => updateField('work_schedule', v)}
                 value={formData.work_schedule}
+                onValueChange={(v) => updateField('work_schedule', v)}
               >
                 <SelectTrigger className="text-base h-12">
                   <SelectValue placeholder="Выберите график" />
@@ -148,8 +221,8 @@ export const ResumeEditPage = () => {
             <div className="space-y-2">
               <Label className="text-base">Период оплаты</Label>
               <Select
-                onValueChange={(v) => updateField('payment_period', v)}
                 value={formData.payment_period}
+                onValueChange={(v) => updateField('payment_period', v)}
               >
                 <SelectTrigger className="text-base h-12">
                   <SelectValue placeholder="Выберите период" />
@@ -243,7 +316,7 @@ export const ResumeEditPage = () => {
             </Button>
           </div>
 
-          {formData.work_experience.map((field: any, index: number) => (
+          {formData.work_experience.map((exp, index) => (
             <div
               key={index}
               className="p-5 border border-border rounded-3xl space-y-4 relative bg-muted/10"
@@ -259,13 +332,13 @@ export const ResumeEditPage = () => {
               <div className="space-y-4">
                 <Input
                   placeholder="Компания"
-                  value={field.company}
+                  value={exp.company}
                   onChange={(e) => updateExperience(index, 'company', e.target.value)}
                   className="bg-background text-base h-12"
                 />
                 <Input
                   placeholder="Должность или профессия"
-                  value={field.position}
+                  value={exp.position}
                   onChange={(e) => updateExperience(index, 'position', e.target.value)}
                   className="bg-background text-base h-12"
                 />
@@ -279,7 +352,7 @@ export const ResumeEditPage = () => {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id={`until_now-${index}`}
-                      checked={field.until_now}
+                      checked={exp.until_now}
                       onCheckedChange={(checked) =>
                         updateExperience(index, 'until_now', checked === true)
                       }
@@ -295,8 +368,8 @@ export const ResumeEditPage = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <Select
+                    value={exp.start_month.toString()}
                     onValueChange={(v) => updateExperience(index, 'start_month', parseInt(v))}
-                    value={field.start_month.toString()}
                   >
                     <SelectTrigger className="bg-background text-base h-12">
                       <SelectValue placeholder="Месяц" />
@@ -313,21 +386,21 @@ export const ResumeEditPage = () => {
                     placeholder="Год"
                     type="number"
                     className="bg-background text-base h-12"
-                    value={field.start_year || ''}
+                    value={exp.start_year || ''}
                     onChange={(e) => updateExperience(index, 'start_year', Number(e.target.value))}
                   />
                 </div>
               </div>
 
-              {!field.until_now && (
+              {!exp.until_now && (
                 <div className="space-y-3">
                   <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     Окончание
                   </span>
                   <div className="grid grid-cols-2 gap-3">
                     <Select
+                      value={exp.end_month?.toString() ?? ''}
                       onValueChange={(v) => updateExperience(index, 'end_month', parseInt(v))}
-                      value={field.end_month?.toString() || ''}
                     >
                       <SelectTrigger className="bg-background text-base h-12">
                         <SelectValue placeholder="Месяц" />
@@ -344,7 +417,7 @@ export const ResumeEditPage = () => {
                       placeholder="Год"
                       type="number"
                       className="bg-background text-base h-12"
-                      value={field.end_year || ''}
+                      value={exp.end_year ?? ''}
                       onChange={(e) => updateExperience(index, 'end_year', Number(e.target.value))}
                     />
                   </div>
@@ -357,7 +430,7 @@ export const ResumeEditPage = () => {
                 </Label>
                 <Textarea
                   placeholder="Чем занимались?"
-                  value={field.description}
+                  value={exp.description}
                   onChange={(e) => updateExperience(index, 'description', e.target.value)}
                   className="min-h-[120px] bg-background border-primary/20 focus-visible:ring-primary text-base"
                 />
@@ -366,7 +439,7 @@ export const ResumeEditPage = () => {
           ))}
         </div>
 
-        {/* About, Skills, etc */}
+        {/* About, Skills, Qualities */}
         <div className="space-y-6 border-t pt-6">
           <div className="space-y-2">
             <Label htmlFor="skills" className="text-base">
@@ -407,21 +480,22 @@ export const ResumeEditPage = () => {
         </div>
 
         {/* Save Button */}
-        <div className="w-full flex justify-center">
+        <div className="w-full flex flex-col items-center gap-2">
           <Button
             type="submit"
+            disabled={!canSubmit}
             className={cn(
-              ' h-14 px-10 rounded-2xl text-base font-bold transition-all duration-300',
-              isFormValid()
+              'h-14 px-10 rounded-2xl text-base font-bold transition-all duration-300',
+              canSubmit
                 ? 'bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white'
                 : 'bg-muted text-muted-foreground cursor-not-allowed',
             )}
-            disabled={!isFormValid()}
           >
-            Сохранить изменения
+            {isSubmitting ? 'Сохранение...' : 'Сохранить изменения'}
           </Button>
+
           {!isFormValid() && (
-            <p className="text-center text-xs text-muted-foreground mt-2 lg:hidden">
+            <p className="text-center text-xs text-muted-foreground lg:hidden">
               Заполните все обязательные поля, чтобы сохранить изменения
             </p>
           )}

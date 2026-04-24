@@ -5,7 +5,7 @@ export interface User {
   lastName: string
   avatar?: string
   phone?: string
-  role: 'seeker' | 'employer'
+  role: 'candidate' | 'employer'
   createdAt: string
   updatedAt: string
 }

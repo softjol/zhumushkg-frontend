@@ -1,26 +1,35 @@
 'use client'
+import { getMyResume } from '@/entities/resume/api'
+import { useResumeStore } from '@/entities/resume/model/store'
 import { ArrowLeft, Edit2, MapPin, Phone, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 
 export const ResumePage = () => {
   const router = useRouter()
-  const [data, setData] = useState<any>(null)
+  const { resume, isLoading, setResume, setLoading } = useResumeStore()
 
   useEffect(() => {
-    const savedData = localStorage.getItem('resume_data')
-    if (savedData) {
-      setData(JSON.parse(savedData))
-    } else {
-      router.push('/resume/create')
-    }
-  }, [router])
-
-  if (!data) return null
+    if (resume) return
+    console.log(resume)
+    setLoading(true)
+    getMyResume()
+      .then((data) => {
+        if (!data) {
+          router.push('/resume/create')
+        } else {
+          setResume(data)
+        }
+      })
+      .catch(() => router.push('/resume/create'))
+      .finally(() => setLoading(false))
+  }, [])
+  if (isLoading || !resume) return null
 
   const getMonthName = (m: number) => months[m - 1] || ''
+  const data = resume
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fe] pb-10 font-sans">
@@ -180,14 +189,16 @@ export const ResumePage = () => {
             Ключевые навыки
           </h3>
           <div className="flex flex-wrap gap-3">
-            {data.skills.split(',').map((skill: string, i: number) => (
-              <span
-                key={i}
-                className="bg-slate-100 text-slate-800 px-4 py-2 rounded-xl text-base font-medium"
-              >
-                {skill.trim()}
-              </span>
-            ))}
+            {(Array.isArray(data.skills) ? data.skills : data.skills.split(',')).map(
+              (skill: string, i: number) => (
+                <span
+                  key={i}
+                  className="bg-slate-100 text-slate-800 px-4 py-2 rounded-xl text-base font-medium"
+                >
+                  {skill.trim()}
+                </span>
+              ),
+            )}
           </div>
         </div>
       </div>

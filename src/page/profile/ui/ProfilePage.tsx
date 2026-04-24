@@ -32,7 +32,7 @@ export const ProfilePage = () => {
     <div className="px-4 lg:px-6 pt-4 lg:pt-6">
       <h1 className=" text-xl font-bold text-foreground mb-4">Кабинет</h1>
       {isAuthenticated ? (
-        <div className="px-4 lg:px-6 py-4 lg:py-6 max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           {/* User info */}
           <div className="flex items-center gap-4 mb-6 p-4 bg-card border border-border rounded-2xl">
             <div className="w-14 h-14 rounded-full bg-primary-light flex items-center justify-center">

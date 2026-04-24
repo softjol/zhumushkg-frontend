@@ -9,6 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useState } from 'react'
 import { cn } from '@/shared/lib/utils'
 import { useRouter } from 'next/navigation'
+import { useResumeStore } from '@/entities/resume/model/store'
+import { createResume } from '@/entities/resume/api'
+import { useUserStore } from '@/entities/user/model/store'
+import type { WorkExperience, ResumeFormData } from '@/entities/resume/model/types'
 
 const months = [
   'Январь',
@@ -25,44 +29,99 @@ const months = [
   'Декабрь',
 ]
 
+// Локальный тип стейта: skills — строка (для инпута через запятую)
+type FormState = {
+  user_id: number | undefined
+  position: string
+  description: string
+  work_schedule: string
+  payment_period: string
+  salary_net: number
+  birth_date: string
+  phone_number: string
+  city: string
+  education: string
+  work_experience: WorkExperience[]
+  skills: string
+  personal_qualities: string
+  photo: string
+}
+
+// ─────────────────────────────────────────────
+// 🧪 ТЕСТОВЫЕ ДАННЫЕ — убрать когда не нужны
+// ─────────────────────────────────────────────
+const TEST_DATA: Omit<FormState, 'user_id'> = {
+  position: 'Middle Node.js Developer',
+  description: 'Опытный разработчик с 4 годами коммерческого опыта.',
+  work_schedule: 'Полный день',
+  payment_period: 'Ежемесячно',
+  salary_net: 50000,
+  birth_date: '1995-01-15',
+  phone_number: '+996700000000',
+  city: 'Бишкек',
+  education: 'Высшее, КГТУ',
+  work_experience: [
+    {
+      company: 'ООО «Техно»',
+      position: 'Backend-разработчик',
+      start_month: 3,
+      start_year: 2021,
+      until_now: true,
+      description: 'Разработка REST API, код-ревью.',
+    },
+  ],
+  skills: 'JavaScript, NestJS, PostgreSQL',
+  personal_qualities: 'Ответственный, коммуникабельный',
+  photo: 'https://example.com/photo.jpg',
+}
+
+// ─────────────────────────────────────────────
+// ✅ РАБОЧИЕ ДАННЫЕ — раскомментировать для прода,
+//    заменить TEST_DATA на EMPTY_DATA в useState ниже
+// ─────────────────────────────────────────────
+// const EMPTY_DATA: Omit<FormState, 'user_id'> = {
+//   position: '',
+//   description: '',
+//   work_schedule: '',
+//   payment_period: '',
+//   salary_net: 0,
+//   birth_date: '',
+//   phone_number: '',
+//   city: '',
+//   education: '',
+//   work_experience: [],
+//   skills: '',
+//   personal_qualities: '',
+//   photo: 'https://example.com/photo.jpg',
+// }
+
 export const ResumeCreatePage = () => {
   const router = useRouter()
+  const { user } = useUserStore.getState()
+  const { setResume } = useResumeStore()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [formData, setFormData] = useState({
-    user_id: 1,
-    description: '',
-    position: '',
-    work_schedule: '',
-    payment_period: '',
-    salary_net: 0,
-    birth_date: '',
-    phone_number: '',
-    city: '',
-    education: '',
-    work_experience: [] as any[],
-    skills: '',
-    personal_qualities: '',
-    photo: '',
+  // 🧪 Для теста — TEST_DATA, для прода заменить на EMPTY_DATA
+  const [formData, setFormData] = useState<FormState>({
+    user_id: user?.id ? Number(user.id) : undefined, // ← конвертируем в number
+    ...TEST_DATA,
   })
-
-  const updateField = (field: string, value: any) => {
+  const updateField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const addExperience = () => {
+    const newExp: WorkExperience = {
+      company: '',
+      position: '',
+      start_month: 1,
+      start_year: new Date().getFullYear(),
+      until_now: false,
+      description: '',
+    }
     setFormData((prev) => ({
       ...prev,
-      work_experience: [
-        ...prev.work_experience,
-        {
-          company: '',
-          position: '',
-          start_month: 1,
-          start_year: 2024,
-          until_now: false,
-          description: '',
-        },
-      ],
+      work_experience: [...prev.work_experience, newExp],
     }))
   }
 
@@ -73,7 +132,11 @@ export const ResumeCreatePage = () => {
     }))
   }
 
-  const updateExperience = (index: number, field: string, value: any) => {
+  const updateExperience = <K extends keyof WorkExperience>(
+    index: number,
+    field: K,
+    value: WorkExperience[K],
+  ) => {
     setFormData((prev) => ({
       ...prev,
       work_experience: prev.work_experience.map((exp, i) =>
@@ -82,8 +145,8 @@ export const ResumeCreatePage = () => {
     }))
   }
 
-  const isFormValid = () => {
-    return (
+  const isFormValid = (): boolean => {
+    return Boolean(
       formData.position &&
       formData.work_schedule &&
       formData.payment_period &&
@@ -94,16 +157,46 @@ export const ResumeCreatePage = () => {
       formData.education &&
       formData.description &&
       formData.skills &&
-      formData.personal_qualities
+      formData.personal_qualities,
     )
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isFormValid()) return
+    if (!isFormValid() || isSubmitting) return
 
-    localStorage.setItem('resume_data', JSON.stringify(formData))
-    router.push('/resume')
+    setIsSubmitting(true)
+    try {
+      // Явно собираем payload без user_id (не входит в ResumeFormData)
+      // и конвертируем skills: строка → массив
+      const payload: ResumeFormData = {
+        position: formData.position,
+        description: formData.description,
+        work_schedule: formData.work_schedule,
+        payment_period: formData.payment_period,
+        salary_net: formData.salary_net,
+        birth_date: formData.birth_date,
+        phone_number: formData.phone_number,
+        city: formData.city,
+        education: formData.education,
+        work_experience: formData.work_experience,
+        personal_qualities: formData.personal_qualities,
+        photo: formData.photo,
+        skills: formData.skills
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      }
+
+      const created = await createResume(payload)
+      setResume(created)
+      router.push('/resume')
+    } catch (err) {
+      console.error(err)
+      // TODO: показать toast об ошибке
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -135,10 +228,10 @@ export const ResumeCreatePage = () => {
             <div className="space-y-2">
               <Label className="text-base">График работы</Label>
               <Select
-                onValueChange={(v) => updateField('work_schedule', v)}
                 value={formData.work_schedule}
+                onValueChange={(v) => updateField('work_schedule', v)}
               >
-                <SelectTrigger className="text-base h-12 ">
+                <SelectTrigger className="text-base h-12">
                   <SelectValue placeholder="Выберите график" />
                 </SelectTrigger>
                 <SelectContent>
@@ -151,8 +244,8 @@ export const ResumeCreatePage = () => {
             <div className="space-y-2">
               <Label className="text-base">Период оплаты</Label>
               <Select
-                onValueChange={(v) => updateField('payment_period', v)}
                 value={formData.payment_period}
+                onValueChange={(v) => updateField('payment_period', v)}
               >
                 <SelectTrigger className="text-base h-12">
                   <SelectValue placeholder="Выберите период" />
@@ -246,7 +339,7 @@ export const ResumeCreatePage = () => {
             </Button>
           </div>
 
-          {formData.work_experience.map((field, index) => (
+          {formData.work_experience.map((exp, index) => (
             <div
               key={index}
               className="p-5 border border-border rounded-3xl space-y-4 relative bg-muted/10"
@@ -262,13 +355,13 @@ export const ResumeCreatePage = () => {
               <div className="space-y-4">
                 <Input
                   placeholder="Компания"
-                  value={field.company}
+                  value={exp.company}
                   onChange={(e) => updateExperience(index, 'company', e.target.value)}
                   className="bg-background text-base h-12"
                 />
                 <Input
                   placeholder="Должность или профессия"
-                  value={field.position}
+                  value={exp.position}
                   onChange={(e) => updateExperience(index, 'position', e.target.value)}
                   className="bg-background text-base h-12"
                 />
@@ -282,7 +375,7 @@ export const ResumeCreatePage = () => {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id={`until_now-${index}`}
-                      checked={field.until_now}
+                      checked={exp.until_now}
                       onCheckedChange={(checked) =>
                         updateExperience(index, 'until_now', checked === true)
                       }
@@ -298,8 +391,8 @@ export const ResumeCreatePage = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <Select
+                    value={exp.start_month.toString()}
                     onValueChange={(v) => updateExperience(index, 'start_month', parseInt(v))}
-                    value={field.start_month.toString()}
                   >
                     <SelectTrigger className="bg-background text-base h-12">
                       <SelectValue placeholder="Месяц" />
@@ -316,21 +409,21 @@ export const ResumeCreatePage = () => {
                     placeholder="Год"
                     type="number"
                     className="bg-background text-base h-12"
-                    value={field.start_year || ''}
+                    value={exp.start_year || ''}
                     onChange={(e) => updateExperience(index, 'start_year', Number(e.target.value))}
                   />
                 </div>
               </div>
 
-              {!field.until_now && (
+              {!exp.until_now && (
                 <div className="space-y-3">
                   <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     Окончание
                   </span>
                   <div className="grid grid-cols-2 gap-3">
                     <Select
+                      value={exp.end_month?.toString() ?? ''}
                       onValueChange={(v) => updateExperience(index, 'end_month', parseInt(v))}
-                      value={field.end_month?.toString() || ''}
                     >
                       <SelectTrigger className="bg-background text-base h-12">
                         <SelectValue placeholder="Месяц" />
@@ -347,7 +440,7 @@ export const ResumeCreatePage = () => {
                       placeholder="Год"
                       type="number"
                       className="bg-background text-base h-12"
-                      value={field.end_year || ''}
+                      value={exp.end_year ?? ''}
                       onChange={(e) => updateExperience(index, 'end_year', Number(e.target.value))}
                     />
                   </div>
@@ -360,7 +453,7 @@ export const ResumeCreatePage = () => {
                 </Label>
                 <Textarea
                   placeholder="Чем занимались?"
-                  value={field.description}
+                  value={exp.description}
                   onChange={(e) => updateExperience(index, 'description', e.target.value)}
                   className="min-h-[120px] bg-background border-primary/20 focus-visible:ring-primary text-base"
                 />
@@ -369,7 +462,7 @@ export const ResumeCreatePage = () => {
           ))}
         </div>
 
-        {/* About, Skills, etc */}
+        {/* About, Skills, Qualities */}
         <div className="space-y-6 border-t pt-6">
           <div className="space-y-2">
             <Label htmlFor="skills" className="text-base">
@@ -409,22 +502,22 @@ export const ResumeCreatePage = () => {
           </div>
         </div>
 
-        {/* Create Button */}
-        <div className="w-full flex justify-center">
+        {/* Submit */}
+        <div className="w-full flex flex-col items-center gap-2">
           <Button
             type="submit"
+            disabled={!isFormValid() || isSubmitting}
             className={cn(
               'h-14 px-10 rounded-2xl text-base font-bold transition-all duration-300 mb-10',
               isFormValid()
                 ? 'bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white'
                 : 'bg-muted text-muted-foreground cursor-not-allowed',
             )}
-            disabled={!isFormValid()}
           >
-            Создать резюме
+            {isSubmitting ? 'Создание...' : 'Создать резюме'}
           </Button>
           {!isFormValid() && (
-            <p className="text-center text-xs text-muted-foreground mt-2 lg:hidden">
+            <p className="text-center text-xs text-muted-foreground lg:hidden">
               Заполните все обязательные поля, чтобы создать резюме
             </p>
           )}
