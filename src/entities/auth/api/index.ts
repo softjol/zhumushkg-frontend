@@ -30,10 +30,8 @@ export async function loginUser(phoneNumber: string) {
   if (!res.ok) throw new Error(await res.text())
   return res.json() // { message, smsCode }
 }
-export async function getProfile(id: number, token: string) {
-  const res = await fetch(`${BASE_URL}/auth/profile/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
+export async function getProfile(id: number) {
+  const res = await fetch(`${BASE_URL}/auth/profile/${id}`)
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }

@@ -57,3 +57,16 @@ export async function deleteResume(id: number): Promise<void> {
   })
   if (!res.ok) throw new Error('Не удалось удалить резюме')
 }
+
+// Моё резюме (GET /resume/my) — возвращает одно или null
+export async function getAllResume(): Promise<Resume[] | null> {
+  const res = await fetch(`${BASE_URL}/resume`, {
+    method: 'GET',
+    // headers: getAuthHeaders(),
+  })
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error('Не удалось загрузить резюме')
+
+  const data: Resume[] = await res.json()
+  return data // возвращаем весь массив резюме
+}

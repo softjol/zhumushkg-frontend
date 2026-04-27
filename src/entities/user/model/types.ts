@@ -1,13 +1,10 @@
 export interface User {
   id: string
-  email: string
   firstName: string
-  lastName: string
-  avatar?: string
-  phone?: string
+  phoneNumber: string
+  phoneConfirmed?: string
+  smsCode?: string
   role: 'candidate' | 'employer'
-  createdAt: string
-  updatedAt: string
 }
 
 export interface EmployerProfile extends User {

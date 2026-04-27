@@ -13,7 +13,6 @@ export const ResumePage = () => {
 
   useEffect(() => {
     if (resume) return
-    console.log(resume)
     setLoading(true)
     getMyResume()
       .then((data) => {
@@ -189,7 +188,7 @@ export const ResumePage = () => {
             Ключевые навыки
           </h3>
           <div className="flex flex-wrap gap-3">
-            {(Array.isArray(data.skills) ? data.skills : data.skills.split(',')).map(
+            {data.skills.map(
               (skill: string, i: number) => (
                 <span
                   key={i}

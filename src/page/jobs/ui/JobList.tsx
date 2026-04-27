@@ -1,5 +1,4 @@
 'use client'
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
 import { JobCard } from '@/entities/job/ui/JobCard'
 import { useState, useEffect } from 'react'
 import { Job } from '@/entities/job/model/types'
@@ -8,10 +7,9 @@ import { SearchBar } from '@/features/search-bar/ui/SearchBar'
 import { useUserStore } from '@/entities/user/model/store'
 import { getFavorites } from '@/entities/favorites/api'
 import { useFavoritesStore } from '@/entities/favorites/model/store'
+import { Pagination } from '@/features/pagination/Pagination'
 
-type Props = {}
-
-export const JobList = ({}: Props) => {
+export const JobList = () => {
   const [jobs, setJobs] = useState<Job[]>([])
   const [favoritesMap, setFavoritesMap] = useState<Map<number, number>>(new Map())
   const { isAuthenticated } = useUserStore.getState()
@@ -40,12 +38,14 @@ export const JobList = ({}: Props) => {
     fetchData()
   }, [isAuthenticated])
 
-  const currentJobs = jobs.slice((currentPage - 1) * jobsPerPage, currentPage * jobsPerPage)
   const totalPages = Math.ceil(jobs.length / jobsPerPage)
+  const currentJobs = jobs.slice((currentPage - 1) * jobsPerPage, currentPage * jobsPerPage)
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0 })
   }
+
   const handleFavoriteChange = (vacancyId: number, favoriteId: number | null) => {
     setFavoritesMap((prev) => {
       const next = new Map(prev)
@@ -57,6 +57,7 @@ export const JobList = ({}: Props) => {
       return next
     })
   }
+
   if (loading) return <p className="text-center py-10">Загрузка...</p>
 
   return (
@@ -64,6 +65,7 @@ export const JobList = ({}: Props) => {
       <div className="lg:hidden block">
         <SearchBar />
       </div>
+
       <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-3">
         {currentJobs.map((job) => (
           <JobCard
@@ -76,39 +78,11 @@ export const JobList = ({}: Props) => {
         ))}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
-          <button
-            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            className="p-2.5 rounded-2xl bg-muted hover:bg-muted/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border"
-          >
-            <ChevronLeft size={22} />
-          </button>
-          <div className="flex items-center gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => handlePageChange(page)}
-                className={`w-11 h-11 rounded-2xl border text-lg font-medium transition-colors ${
-                  currentPage === page
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-gray-100 hover:bg-muted/80 text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            className="p-2.5 rounded-2xl bg-muted hover:bg-muted/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border"
-          >
-            <ChevronRight size={22} />
-          </button>
-        </div>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   )
 }
