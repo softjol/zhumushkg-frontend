@@ -5,6 +5,7 @@ import { useFavoritesStore } from '@/entities/favorites/model/store'
 import { getVacancyById } from '@/entities/job/api'
 import { Job } from '@/entities/job/model/types'
 import { useUserStore } from '@/entities/user/model/store'
+import { useResumeStore } from '@/entities/resume/model/store'
 import { AuthRequiredModal } from '@/widgets/auth-required/ui/AuthRequiredModal'
 import CompanyIcon from '@/features/company-icon/CompanyIcon'
 import { Button } from '@/shared/ui/button'
@@ -19,9 +20,24 @@ import {
   DollarSign,
   Building2,
   Calendar,
+  Eye,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { formatDate } from '@/shared/lib/formatDate'
+import { useApplicationsStore } from '@/entities/applications/model/store'
+import { getMyResume } from '@/entities/resume/api'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/shared/ui/dialog'
+import { applyToVacancy, getMyApplications } from '@/entities/applications/api'
+import { Skeleton } from '@/shared/ui/skeleton'
+import { JobDetailPageSkeleton } from './JobDetailPageSkeleton'
 
 interface JobDetailPageProps {
   jobId: number
@@ -31,9 +47,12 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
   const { isAuthenticated } = useUserStore()
   const [job, setJob] = useState<Job | null>(null)
   const router = useRouter()
-  const [applied, setApplied] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showResumeModal, setShowResumeModal] = useState(false)
+
+  const { isApplied, addApplied, setApplied } = useApplicationsStore()
+  const applied = isApplied(jobId)
 
   const { isFavorite, getFavoriteId, addFavorite, removeFavorite, setFavorites } =
     useFavoritesStore()
@@ -44,16 +63,22 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [job] = await Promise.all([
-          getVacancyById(jobId),
-          isAuthenticated
-            ? getFavorites().then((list) => {
-                const map = new Map(list.map((f) => [f.vacancy_id, f.id]))
-                setFavorites(map)
-              })
-            : Promise.resolve(),
-        ])
-        setJob(job)
+        const promises: Promise<any>[] = [getVacancyById(jobId)]
+
+        if (isAuthenticated) {
+          promises.push(
+            getFavorites().then((list) => {
+              setFavorites(new Map(list.map((f) => [f.vacancy_id, f.id])))
+            }),
+            getMyApplications().then((apps) => {
+              setApplied(new Set(apps.map((a) => a.vacancy_id)))
+            }),
+          )
+        }
+
+        const [jobData] = await Promise.all(promises)
+        setJob(jobData)
+        console.log(jobData)
       } catch (e) {
         console.error(e)
       } finally {
@@ -82,13 +107,23 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
     }
   }
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!isAuthenticated) {
       setShowAuthModal(true)
       return
     }
-    setApplied(true)
-    // TODO: API вызов
+    try {
+      const resume = await getMyResume()
+      if (!resume) {
+        setShowResumeModal(true)
+        return
+      }
+      await applyToVacancy({ vacancy_id: jobId, resume_id: resume.id })
+      addApplied(jobId)
+    } catch (e) {
+      console.error(e)
+      alert('Произошла ошибка при отправке отклика. Пожалуйста, попробуйте снова.')
+    }
   }
 
   const handleChat = () => {
@@ -99,8 +134,7 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
     router.push('/chat')
   }
 
-  if (loading) return <p className="text-center py-10">Загрузка...</p>
-
+  if (loading) return <JobDetailPageSkeleton/>
   if (!job) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center text-red-500">
@@ -131,6 +165,20 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
   return (
     <div className="min-h-screen bg-background ">
       <AuthRequiredModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <Dialog open={showResumeModal} onOpenChange={setShowResumeModal}>
+        <DialogContent className="max-w-lg p-10 text-center">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-medium">
+              У вас пока нет резюме чтобы откликнуться
+            </DialogTitle>
+            <DialogDescription>
+              Пожалуйста, создайте резюме перед откликом на вакансию.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => router.push('/resume')}>Создать резюме</Button>
+        </DialogContent>
+      </Dialog>
+
       {/* Header */}
       <header className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3 overflow-hidden">
@@ -159,8 +207,7 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 lg:px-6 py-6 pb-28 space-y-6 animate-fade-in">
-        {/* ... existing content ... */}
+      <div className="max-w-3xl mx-auto px-5 lg:px-6 py-6 pb-28 space-y-6 animate-fade-in">
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
             <h1 className="text-2xl font-bold text-foreground break-words flex-1 min-w-0">
@@ -186,17 +233,25 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2">
+          <div className=" flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-2">
             <div className="flex items-center gap-2">
               <CompanyIcon company={job.company} />
               <span className="text-lg font-medium text-muted-foreground">{job.company}</span>
             </div>
-            <span className="text-sm font-medium text-muted-foreground">
-              Опубликовано: {job.createdAt}
-            </span>
+            <div className="w-full flex items-center gap-3 justify-between sm:justify-start lg:justify-end">
+              <span className="text-sm font-medium text-muted-foreground lg:order-2">
+                Опубликовано: {formatDate(job.createdAt)}
+              </span>
+
+              <div className="flex items-center gap-1 mx-1 text-gray-400 text-sm lg:order-1">
+                <Eye size={16} />
+                {job.views}
+                <Heart size={16} className="ml-2" />
+                {job.favorite}
+              </div>
+            </div>
           </div>
         </div>
-
         {/* Meta */}
         <div className="bg-muted rounded-2xl p-4 space-y-3">
           {meta.map((m, i) => (
@@ -207,55 +262,40 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
             </div>
           ))}
         </div>
-
         {/* Responsibilities */}
-        {job.requir_respons && job.requir_respons.length > 0 && (
+        {job.description && (
           <section>
             <h3 className="text-lg font-semibold text-foreground mb-2">Обязанности</h3>
             <ul className="space-y-1.5">
-              {/* {job.responsibilities.map((r, i) => (
-                <li key={i} className="text-base text-black font-medium flex items-start gap-2">
-                  <span className="w-[5px] h-[5px] rounded-full bg-black mt-2 flex-shrink-0" />
-                  {r}
-                </li>
-              ))} */}
               <li className="text-base text-black font-medium flex items-start gap-2">
                 <span className="w-[5px] h-[5px] rounded-full bg-black mt-2 flex-shrink-0" />
-                {job.requir_respons}
+                {job.description}
               </li>
             </ul>
           </section>
         )}
-
-        {/* Requirements */}
-        {/* {job.requirements && job.requirements.length > 0 && (
+        {job.requirements && (
           <section>
-            <h3 className="font-semibold text-black text-lg mb-2">Требования</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Требования</h3>
             <ul className="space-y-1.5">
-              {job.requirements.map((r, i) => (
-                <li key={i} className="text-base text-black font-medium flex items-start gap-2">
-                  <span className="w-[5px] h-[5px] rounded-full bg-black mt-2 flex-shrink-0" />
-                  {r}
-                </li>
-              ))}
+              <li className="text-base text-black font-medium flex items-start gap-2">
+                <span className="w-[5px] h-[5px] rounded-full bg-black mt-2 flex-shrink-0" />
+                {job.requirements}
+              </li>
             </ul>
           </section>
-        )} */}
-
-        {/* Conditions */}
-        {/* {job.conditions && job.conditions.length > 0 && (
+        )}{' '}
+        {job.conditions && (
           <section>
-            <h3 className="font-semibold text-black text-lg  mb-2">Условия</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Условия</h3>
             <ul className="space-y-1.5">
-              {job.conditions.map((c, i) => (
-                <li key={i} className="text-base text-black font-medium flex items-start gap-2">
-                  <span className="w-[5px] h-[5px] rounded-full bg-black mt-2 flex-shrink-0" />
-                  {c}
-                </li>
-              ))}
+              <li className="text-base text-black font-medium flex items-start gap-2">
+                <span className="w-[5px] h-[5px] rounded-full bg-black mt-2 flex-shrink-0" />
+                {job.conditions}
+              </li>
             </ul>
           </section>
-        )} */}
+        )}
       </div>
 
       {/* Fixed bottom bar */}

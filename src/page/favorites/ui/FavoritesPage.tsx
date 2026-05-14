@@ -1,6 +1,6 @@
 'use client'
 import { Button } from '@/shared/ui/button'
-import { Heart, LogIn } from 'lucide-react'
+import { Heart } from 'lucide-react'
 import Link from 'next/link'
 import { useUserStore } from '@/entities/user/model/store'
 import { useEffect, useState } from 'react'
@@ -9,11 +9,14 @@ import { JobCard } from '@/entities/job/ui/JobCard'
 import { FavoriteItem } from '@/entities/favorites/model/type'
 import { getFavorites } from '@/entities/favorites/api'
 import { useFavoritesStore } from '@/entities/favorites/model/store'
+import { JobCardSkeleton } from '@/entities/job/ui/JobCardSkeleton'
 
 export const FavoritesPage = () => {
-  const { isAuthenticated } = useUserStore()
+  const { isAuthenticated, isLoading } = useUserStore()
   const [favorites, setFavorites] = useState<FavoriteItem[]>([])
   const { setFavorites: setFavoritesStore, favoritesMap } = useFavoritesStore()
+  const [hasFetched, setHasFetched] = useState(false)
+
   useEffect(() => {
     if (!isAuthenticated) return
     const fetchFavorites = async () => {
@@ -24,14 +27,24 @@ export const FavoritesPage = () => {
         setFavoritesStore(map)
       } catch (error) {
         console.error('Ошибка при загрузке избранного:', error)
+      } finally {
+        setHasFetched(true)
       }
     }
     fetchFavorites()
-  }, [])
+  }, [isAuthenticated])
+
   return (
-    <div className="px-4 lg:px-6 py-4 lg:py-6">
+    <div className="px-4 lg:px-6 py-4 lg:py-6 h-screen bg-muted">
       <h1 className="text-xl font-bold text-foreground mb-4">Избранное</h1>
-      {isAuthenticated ? (
+
+      {isLoading || (isAuthenticated && !hasFetched) ? (
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <JobCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : isAuthenticated ? (
         favorites.length !== 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {favorites

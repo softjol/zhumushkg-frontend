@@ -12,6 +12,7 @@ import { cn } from '@/shared/lib/utils'
 import { useResumeStore } from '@/entities/resume/model/store'
 import { updateResume } from '@/entities/resume/api'
 import type { WorkExperience } from '@/entities/resume/model/types'
+import { JOB_CATEGORIES, JobCategory } from '@/shared/constants/category'
 
 const months = [
   'Январь',
@@ -31,6 +32,7 @@ const months = [
 // Локальный тип: skills как строка для инпута
 type FormState = {
   position: string
+  category: string
   description: string
   work_schedule: string
   payment_period: string
@@ -49,6 +51,7 @@ type FormState = {
 function resumeToFormState(resume: any): FormState {
   return {
     position: resume.position ?? '',
+    category: resume.category ?? '',
     description: resume.description ?? '',
     work_schedule: resume.work_schedule ?? '',
     payment_period: resume.payment_period ?? '',
@@ -134,6 +137,7 @@ export const ResumeEditPage = () => {
     if (!formData) return false
     return Boolean(
       formData.position &&
+      formData.category &&
       formData.work_schedule &&
       formData.payment_period &&
       formData.salary_net > 0 &&
@@ -179,7 +183,7 @@ export const ResumeEditPage = () => {
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)] lg:min-h-screen bg-background">
       <header className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-muted">
+        <button onClick={() => router.push('/resume')} className="p-1.5 rounded-xl hover:bg-muted">
           <ArrowLeft size={22} />
         </button>
         <span className="flex-1 font-semibold text-lg">Редактирование резюме</span>
@@ -235,18 +239,34 @@ export const ResumeEditPage = () => {
               </Select>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="salary" className="text-base">
-              Желаемая зарплата (сом)
-            </Label>
-            <Input
-              id="salary"
-              type="number"
-              className="text-base h-12"
-              value={formData.salary_net || ''}
-              onChange={(e) => updateField('salary_net', Number(e.target.value))}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="salary" className="text-base">
+                Желаемая зарплата (сом)
+              </Label>
+              <Input
+                id="salary"
+                type="number"
+                className="text-base h-12"
+                value={formData.salary_net || ''}
+                onChange={(e) => updateField('salary_net', Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-base">Категория</Label>
+              <Select value={formData.category} onValueChange={(v) => updateField('category', v)}>
+                <SelectTrigger className="text-base h-12">
+                  <SelectValue placeholder="Выберите категорию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {JOB_CATEGORIES.filter((c) => c.id !== JobCategory.ALL).map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 

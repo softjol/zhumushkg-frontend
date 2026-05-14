@@ -1,19 +1,56 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+import { useUserStore } from '@/entities/user/model/store'
+import { AuthRequiredModal } from '@/widgets/auth-required/ui/AuthRequiredModal'
 import { SearchBar } from '@/features/search-bar/ui/SearchBar'
 import Link from 'next/link'
 import iconLogo from '@/assets/icons/Logo.svg'
 import Image from 'next/image'
-import { Bell } from 'lucide-react'
+import { Bell } from 'lucide-react' 
+import { useEffect, useState } from 'react'
+import { getNotifications } from '@/entities/notifications/api'
 
 export function Header() {
+  const [isNotification, setIsNotification] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const { isAuthenticated, user } = useUserStore()
+  const router = useRouter()
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await getNotifications()
+        data.length !== 0 && setIsNotification(true)
+      } catch (error) {
+        console.log('Ошибка при загрузке уведомлений:', error)
+      }
+    }
+    fetchNotifications()
+  }, [])
+
+  const handleNotificationClick = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true)
+    } else {
+      const path = user?.role?.toUpperCase() === 'EMPLOYER' ? '/employer/notifications' : '/notifications'
+      router.push(path)
+    }
+  }
+
   return (
     <header className="h-[64px] lg:h-[73px] flex items-center gap-4 px-4 py-3 lg:px-6 lg:py-4 border-b border-border bg-background sticky top-0 z-20 ">
       {/* Desktop Search bar */}
       <div className="hidden lg:flex w-full justify-between items-center">
         <SearchBar />
-        <div className="group bg-muted p-2.5 rounded-full cursor-pointer hover:shadow-md transition-all ">
+        <div
+          onClick={handleNotificationClick}
+          className="group bg-muted p-2.5 rounded-full cursor-pointer hover:shadow-md transition-all relative "
+        >
           <Bell className="text-muted-foreground group-hover:text-primary transition-colors" />
+          {isNotification && (
+            <div className="absolute w-1.5 h-1.5 bg-primary rounded-full top-2 right-2"></div>
+          )}
         </div>
       </div>
       {/* Mobile header */}
@@ -25,10 +62,17 @@ export function Header() {
             муш.kg
           </div>
         </Link>
-        <div className="group bg-muted p-2 rounded-full cursor-pointer hover:shadow-md transition-all ">
+        <div
+          onClick={handleNotificationClick}
+          className="group bg-muted p-2 rounded-full cursor-pointer hover:shadow-md transition-all "
+        >
           <Bell className=" text-muted-foreground group-hover:text-primary transition-colors" />
+          {isNotification && (
+            <div className="absolute w-1.5 h-1.5 bg-primary rounded-full top-2 right-2"></div>
+          )}
         </div>
       </div>
+      <AuthRequiredModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </header>
   )
 }

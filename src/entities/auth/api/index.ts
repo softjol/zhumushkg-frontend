@@ -1,13 +1,13 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
-export async function registerUser(firstName: string, phoneNumber: string) {
+export async function registerUser(firstName: string, phoneNumber: string, role: 'JOB_SEEKER' | 'EMPLOYER') {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ firstName, phoneNumber }),
+    body: JSON.stringify({ firstName, phoneNumber, role }),
   })
   if (!res.ok) throw new Error(await res.text())
-  return res.json() // { id, firstName, phoneNumber, smsCode, phoneConfirmed, role }
+  return res.json()
 }
 
 export async function confirmPhone(phoneNumber: string, code: string): Promise<string> {
@@ -18,6 +18,7 @@ export async function confirmPhone(phoneNumber: string, code: string): Promise<s
   })
   if (!res.ok) throw new Error(await res.text())
   const data = await res.json()
+console.log('confirmPhone response:', data)
   return data.access_token // <-- именно access_token, не accessToken
 }
 
@@ -29,9 +30,4 @@ export async function loginUser(phoneNumber: string) {
   })
   if (!res.ok) throw new Error(await res.text())
   return res.json() // { message, smsCode }
-}
-export async function getProfile(id: number) {
-  const res = await fetch(`${BASE_URL}/auth/profile/${id}`)
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
 }

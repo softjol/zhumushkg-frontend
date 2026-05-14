@@ -7,9 +7,9 @@ import {
   Inbox,
   Building2,
   Users,
-} from 'lucide-react';
-import { ROUTES } from '@/shared/config/routes';
-import { NavItem, UserRole } from './types';
+} from 'lucide-react'
+import { ROUTES } from '@/shared/config/routes'
+import { NavItem, UserRole } from './types'
 
 export const candidateNavItems: NavItem[] = [
   {
@@ -33,7 +33,7 @@ export const candidateNavItems: NavItem[] = [
     label: 'Кабинет',
     icon: User,
   },
-];
+]
 
 export const employerNavItems: NavItem[] = [
   {
@@ -47,12 +47,7 @@ export const employerNavItems: NavItem[] = [
     icon: Briefcase,
   },
   {
-    path: ROUTES.EMPLOYER.APPLICANTS,
-    label: 'Отклики',
-    icon: Inbox,
-  },
-  {
-    path: ROUTES.CANDIDATE.CHAT,
+    path: ROUTES.EMPLOYER.CHAT,
     label: 'Чат',
     icon: MessageCircle,
     badge: 0,
@@ -62,8 +57,8 @@ export const employerNavItems: NavItem[] = [
     label: 'Кабинет',
     icon: Building2,
   },
-];
+]
 
 export const getNavItems = (role: UserRole): NavItem[] => {
-  return role === 'employer' ? employerNavItems : candidateNavItems;
-};
+  return role === 'EMPLOYER' ? employerNavItems : candidateNavItems
+}

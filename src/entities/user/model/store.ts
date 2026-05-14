@@ -1,8 +1,16 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { jwtDecode } from 'jwt-decode'
-import { User } from './types'
-import { getProfile } from '@/entities/auth/api'
+import { getProfile } from '../api'
+
+export interface User {
+  id: string
+  firstName: string
+  phoneNumber: string
+  phoneConfirmed: string
+  smsCode: string
+  role: 'JOB_SEEKER' | 'EMPLOYER'
+}
 
 type TokenPayload = {
   phoneNumber: string
@@ -12,6 +20,7 @@ type TokenPayload = {
   firstName: string
   iat: number
   exp: number
+  smsCode: string
 }
 
 function isTokenExpired(token: string): boolean {
@@ -55,12 +64,10 @@ export const useUserStore = create<UserStore>()(
         const user: User = {
           id: String(decoded.id),
           firstName: decoded.firstName,
-          lastName: '',
-          email: '',
-          phone: decoded.phoneNumber,
+          phoneNumber: decoded.phoneNumber,
+          phoneConfirmed: String(decoded.phoneConfirmed),
+          smsCode: decoded.smsCode,
           role: decoded.role as User['role'],
-          createdAt: '',
-          updatedAt: '',
         }
         set({ token, user, isAuthenticated: true })
       },
@@ -69,12 +76,12 @@ export const useUserStore = create<UserStore>()(
         const { token, user } = get()
         if (!token || !user) return
         try {
-          const data = await getProfile(Number(user.id), token)
+          const data = await getProfile(Number(user.id))
           set({
             user: {
               ...user,
               firstName: data.firstName,
-              phone: data.phoneNumber,
+              phoneNumber: data.phoneNumber,
               role: data.role.role.toLowerCase() as User['role'],
             },
           })
@@ -102,6 +109,7 @@ export const useUserStore = create<UserStore>()(
         } else if (state.token) {
           state.fetchProfile()
         }
+        state.setIsLoading(false)
       },
     },
   ),

@@ -6,50 +6,43 @@ import { getNavItems } from './nav-config'
 import { UserRole, AppLayoutContextType } from './types'
 import { ROUTES } from '@/shared/config/routes'
 import { useUserStore } from '@/entities/user/model/store'
+import { switchRoleApi } from '@/entities/user/api'
 
 export function useAppLayout(): AppLayoutContextType {
   const pathname = usePathname()
   const router = useRouter()
   const { user } = useUserStore()
-  const [role, setRole] = useState<UserRole>('candidate')
+  const [role, setRole] = useState<UserRole>('JOB_SEEKER')
   const [hasCompanyProfile, setHasCompanyProfile] = useState(false)
   const [activeFilterGroupsCount, setActiveFilterGroupsCount] = useState(0)
 
-  // Determine role based on current route
   useEffect(() => {
     if (pathname?.startsWith('/employer')) {
-      setRole('employer')
+      setRole('EMPLOYER')
     } else {
-      setRole('candidate')
+      setRole(user?.role === 'EMPLOYER' ? 'EMPLOYER' : 'JOB_SEEKER')
     }
-  }, [pathname])
-
-  // Check company profile
-  useEffect(() => {
-    const checkCompanyProfile = async () => {
-      if (user?.role === 'employer') {
-        // Fetch from API if needed
-        setHasCompanyProfile(true)
-      }
-    }
-
-    checkCompanyProfile()
-  }, [user])
+  }, [pathname, user])
 
   const isMainPage = pathname === ROUTES.CANDIDATE.JOBS || pathname === ROUTES.EMPLOYER.CANDIDATES
 
   const navItems = getNavItems(role)
 
-  const switchRole = (newRole: UserRole) => {
-    if (newRole === 'employer' && !hasCompanyProfile) {
-      router.push(ROUTES.EMPLOYER.CANDIDATES)
-      setRole(newRole)
+  const { token, setToken } = useUserStore()
+
+  const switchRole = async (newRole: UserRole) => {
+    const backendRole = newRole === 'EMPLOYER' ? 'EMPLOYER' : 'JOB_SEEKER'
+
+    try {
+      const newToken = await switchRoleApi(backendRole, token!) // вызов API
+      setToken(newToken) // setToken уже декодирует токен и обновляет user.role
+    } catch (e) {
+      console.error('Не удалось переключить роль', e)
       return
     }
 
     setRole(newRole)
-    const defaultPath = newRole === 'employer' ? ROUTES.EMPLOYER.CANDIDATES : ROUTES.CANDIDATE.JOBS
-
+    const defaultPath = newRole === 'EMPLOYER' ? ROUTES.EMPLOYER.CANDIDATES : ROUTES.CANDIDATE.JOBS
     router.push(defaultPath)
   }
 

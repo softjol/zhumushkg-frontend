@@ -1,16 +1,4 @@
-export const categories = [
-  { id: 'all', label: 'Все', icon: 'LayoutGrid' },
-  { id: 'construction', label: 'Строительство', icon: 'Hammer' },
-  { id: 'transport', label: 'Транспорт', icon: 'Car' },
-  { id: 'it', label: 'IT', icon: 'Monitor' },
-  { id: 'food', label: 'Еда и напитки', icon: 'UtensilsCrossed' },
-  { id: 'education', label: 'Образование', icon: 'GraduationCap' },
-  { id: 'beauty', label: 'Красота', icon: 'Sparkles' },
-  { id: 'services', label: 'Услуги', icon: 'Wrench' },
-  { id: 'trade', label: 'Торговля', icon: 'ShoppingBag' },
-  { id: 'manufacturing', label: 'Производство', icon: 'Factory' },
-  { id: 'security', label: 'Охрана', icon: 'Shield' },
-]
+
 export const featuredCompanies = [
   {
     id: '1',

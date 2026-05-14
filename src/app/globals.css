@@ -169,6 +169,7 @@
 
   button {
     @apply cursor-pointer;
+    outline: none;
   }
 
   input::placeholder,

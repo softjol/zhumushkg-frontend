@@ -14,7 +14,7 @@ import { useUserStore } from '@/entities/user/model/store'
 
 export const LoginPage = () => {
   const router = useRouter()
-  const { setToken } = useUserStore()
+  const { user, setToken } = useUserStore()
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone')
   const [phone, setPhone] = useState('')
@@ -63,9 +63,15 @@ export const LoginPage = () => {
     setError('')
     try {
       const token = await confirmPhone('+996' + phone, otp)
-      console.log('Received token:', token)
       setToken(token)
-      router.push('/jobs')
+
+      const { user } = useUserStore.getState()
+      
+      if (user?.role === 'EMPLOYER') {
+        router.push('/employer/candidates')
+      } else {
+        router.push('/jobs')
+      }
     } catch (e: any) {
       setError(e.message || 'Неверный код')
     } finally {
@@ -90,7 +96,7 @@ export const LoginPage = () => {
         </Link>
       </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20 -mt-20 sm:mt-0">
         <div className="w-full max-w-sm" key={step}>
           <div className="flex items-center justify-center gap-2 mb-10">
             <div className="text-[38px] flex items-center font-bold">
@@ -101,7 +107,7 @@ export const LoginPage = () => {
           </div>
 
           {step === 'phone' ? (
-            <>
+            <form onSubmit={(e) => { e.preventDefault(); handleSendCode(); }}>
               <h1 className="text-xl font-bold text-foreground text-center mb-2">
                 Войти в аккаунт
               </h1>
@@ -146,9 +152,9 @@ export const LoginPage = () => {
                   Политикой конфиденциальности
                 </a>
               </p>
-            </>
+            </form>
           ) : (
-            <>
+            <form onSubmit={(e) => { e.preventDefault(); handleVerify(); }}>
               <h1 className="text-xl font-bold text-foreground text-center mb-2">Введите код</h1>
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
                 Код отправлен на +996 {phone}
@@ -171,9 +177,7 @@ export const LoginPage = () => {
                 </InputOTP>
               </div>
 
-              {error && (
-                <p className="text-sm text-destructive text-center mb-3">{error}</p>
-              )}
+              {error && <p className="text-sm text-destructive text-center mb-3">{error}</p>}
 
               <Button
                 className="w-full rounded-2xl h-12 text-base"
@@ -195,7 +199,7 @@ export const LoginPage = () => {
                   </button>
                 )}
               </p>
-            </>
+            </form>
           )}
         </div>
       </div>

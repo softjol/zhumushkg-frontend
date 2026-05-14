@@ -19,6 +19,7 @@ export const RegisterPage = () => {
   const [step, setStep] = useState<'phone' | 'otp'>('phone')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [role, setRole] = useState<'JOB_SEEKER' | 'EMPLOYER' | ''>('')
   const [otp, setOtp] = useState('')
   const [timer, setTimer] = useState(59)
   const [error, setError] = useState('')
@@ -26,7 +27,8 @@ export const RegisterPage = () => {
 
   const isPhoneValid = phone.replace(/\D/g, '').length === 9
   const isNameValid = name.trim().length >= 2
-  const isFormValid = isPhoneValid && isNameValid
+  const isRoleValid = role !== ''
+  const isFormValid = isPhoneValid && isNameValid && isRoleValid
 
   const startTimer = () => {
     setTimer(59)
@@ -48,8 +50,8 @@ export const RegisterPage = () => {
     setIsLoading(true)
     setError('')
     try {
-      const data = await registerUser(name.trim(), '+996' + phone)
-      if (data.smsCode) setSmsCode(data.smsCode) // сохраняем код
+      const data = await registerUser(name.trim(), '+996' + phone, role)
+      if (data.smsCode) setSmsCode(data.smsCode)
       setStep('otp')
       setOtp('')
       startTimer()
@@ -65,9 +67,10 @@ export const RegisterPage = () => {
     setIsLoading(true)
     setError('')
     try {
-      const token = await confirmPhone('+996' + phone, otp) // возвращает строку
+      const token = await confirmPhone('+996' + phone, otp)
       setToken(token)
-      router.push('/jobs')
+      if (role === 'JOB_SEEKER') router.push('/jobs')
+      else router.push('/employer/candidates')
     } catch (e: any) {
       setError(e.message || 'Неверный код')
     } finally {
@@ -103,14 +106,28 @@ export const RegisterPage = () => {
           </div>
 
           {step === 'phone' ? (
-            <>
+           <form onSubmit={(e) => { e.preventDefault(); handleSendCode(); }}>
+
               <h1 className="text-xl font-bold text-foreground text-center mb-2">
                 Создать аккаунт
               </h1>
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
                 Заполните данные для регистрации
               </p>
-
+              <div className="flex gap-7 mb-5">
+                <div
+                  onClick={() => setRole('JOB_SEEKER')}
+                  className={`w-full bg-muted p-5 flex justify-center items-center text-base font-medium  cursor-pointer rounded-2xl shadow border-[2px] border-muted hover:border-primary transition duration-100 ${role === 'JOB_SEEKER' ? 'border-primary bg-primary/20' : ''}`}
+                >
+                  Ищу работу
+                </div>
+                <div
+                  onClick={() => setRole('EMPLOYER')}
+                  className={`w-full bg-muted p-5 text-base font-medium cursor-pointer rounded-2xl shadow border-[2px] border-muted hover:border-primary transition duration-100 ${role === 'EMPLOYER' ? 'border-primary bg-primary/20' : ''}`}
+                >
+                  Ищу сотрудника
+                </div>
+              </div>
               <Input
                 type="text"
                 placeholder="Ваше имя"
@@ -157,9 +174,9 @@ export const RegisterPage = () => {
                   Политикой конфиденциальности
                 </a>
               </p>
-            </>
+            </form>
           ) : (
-            <>
+            <form onSubmit={(e) => { e.preventDefault(); handleVerify(); }}>
               <h1 className="text-xl font-bold text-foreground text-center mb-2">Введите код</h1>
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
                 Код отправлен на +996 {phone}
@@ -204,7 +221,7 @@ export const RegisterPage = () => {
                   </button>
                 )}
               </p>
-            </>
+            </form>
           )}
         </div>
       </div>

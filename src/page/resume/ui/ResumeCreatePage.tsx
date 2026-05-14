@@ -13,6 +13,7 @@ import { useResumeStore } from '@/entities/resume/model/store'
 import { createResume } from '@/entities/resume/api'
 import { useUserStore } from '@/entities/user/model/store'
 import type { WorkExperience, ResumeFormData } from '@/entities/resume/model/types'
+import { JobCategory, JOB_CATEGORIES } from '@/shared/constants/category'
 
 const months = [
   'Январь',
@@ -29,10 +30,10 @@ const months = [
   'Декабрь',
 ]
 
-// Локальный тип стейта: skills — строка (для инпута через запятую)
 type FormState = {
   user_id: number | undefined
   position: string
+  category: string
   description: string
   work_schedule: string
   payment_period: string
@@ -47,64 +48,30 @@ type FormState = {
   photo: string
 }
 
-// ─────────────────────────────────────────────
-// 🧪 ТЕСТОВЫЕ ДАННЫЕ — убрать когда не нужны
-// ─────────────────────────────────────────────
-const TEST_DATA: Omit<FormState, 'user_id'> = {
-  position: 'Middle Node.js Developer',
-  description: 'Опытный разработчик с 4 годами коммерческого опыта.',
-  work_schedule: 'Полный день',
-  payment_period: 'Ежемесячно',
-  salary_net: 50000,
-  birth_date: '1995-01-15',
-  phone_number: '+996700000000',
-  city: 'Бишкек',
-  education: 'Высшее, КГТУ',
-  work_experience: [
-    {
-      company: 'ООО «Техно»',
-      position: 'Backend-разработчик',
-      start_month: 3,
-      start_year: 2021,
-      until_now: true,
-      description: 'Разработка REST API, код-ревью.',
-    },
-  ],
-  skills: 'JavaScript, NestJS, PostgreSQL',
-  personal_qualities: 'Ответственный, коммуникабельный',
-  photo: 'https://example.com/photo.jpg',
-}
-
-// ─────────────────────────────────────────────
-// ✅ РАБОЧИЕ ДАННЫЕ — раскомментировать для прода,
-//    заменить TEST_DATA на EMPTY_DATA в useState ниже
-// ─────────────────────────────────────────────
-// const EMPTY_DATA: Omit<FormState, 'user_id'> = {
-//   position: '',
-//   description: '',
-//   work_schedule: '',
-//   payment_period: '',
-//   salary_net: 0,
-//   birth_date: '',
-//   phone_number: '',
-//   city: '',
-//   education: '',
-//   work_experience: [],
-//   skills: '',
-//   personal_qualities: '',
-//   photo: 'https://example.com/photo.jpg',
-// }
-
 export const ResumeCreatePage = () => {
   const router = useRouter()
   const { user } = useUserStore.getState()
   const { setResume } = useResumeStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // 🧪 Для теста — TEST_DATA, для прода заменить на EMPTY_DATA
+  const EMPTY_DATA: Omit<FormState, 'user_id'> = {
+    position: '',
+    category: '',
+    description: '',
+    work_schedule: '',
+    payment_period: '',
+    salary_net: 0,
+    birth_date: '',
+    phone_number: '',
+    city: '',
+    education: '',
+    work_experience: [],
+    skills: '',
+    personal_qualities: '',
+    photo: 'https://example.com/photo.jpg',
+  }
   const [formData, setFormData] = useState<FormState>({
-    user_id: user?.id ? Number(user.id) : undefined, // ← конвертируем в number
-    ...TEST_DATA,
+    user_id: user?.id ? Number(user.id) : undefined,
+    ...EMPTY_DATA,
   })
   const updateField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -114,8 +81,8 @@ export const ResumeCreatePage = () => {
     const newExp: WorkExperience = {
       company: '',
       position: '',
-      start_month: 1,
-      start_year: new Date().getFullYear(),
+      start_month: undefined,
+      start_year: undefined,
       until_now: false,
       description: '',
     }
@@ -148,7 +115,9 @@ export const ResumeCreatePage = () => {
   const isFormValid = (): boolean => {
     return Boolean(
       formData.position &&
+      formData.category &&
       formData.work_schedule &&
+      formData.work_experience.length > 0 &&
       formData.payment_period &&
       formData.salary_net > 0 &&
       formData.birth_date &&
@@ -167,9 +136,9 @@ export const ResumeCreatePage = () => {
 
     setIsSubmitting(true)
     try {
-      // Явно собираем payload без user_id (не входит в ResumeFormData)
-      // и конвертируем skills: строка → массив
       const payload: ResumeFormData = {
+        user_id: formData.user_id!,
+        category: formData.category,
         position: formData.position,
         description: formData.description,
         work_schedule: formData.work_schedule,
@@ -193,7 +162,6 @@ export const ResumeCreatePage = () => {
       router.push('/resume')
     } catch (err) {
       console.error(err)
-      // TODO: показать toast об ошибке
     } finally {
       setIsSubmitting(false)
     }
@@ -202,13 +170,13 @@ export const ResumeCreatePage = () => {
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)] lg:min-h-screen bg-background">
       <header className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-muted">
+        <button onClick={() => router.push('/profile')} className="p-1.5 rounded-xl hover:bg-muted">
           <ArrowLeft size={22} />
         </button>
         <span className="flex-1 font-semibold text-lg">Создание резюме</span>
       </header>
 
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 lg:p-6 space-y-8 w-full pb-10">
+      <div className="max-w-2xl mx-auto p-4 lg:p-6 space-y-8 w-full pb-10">
         {/* General Info */}
         <div className="space-y-4">
           <div className="space-y-2">
@@ -258,18 +226,34 @@ export const ResumeCreatePage = () => {
               </Select>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="salary" className="text-base">
-              Желаемая зарплата (сом)
-            </Label>
-            <Input
-              id="salary"
-              type="number"
-              className="text-base h-12"
-              value={formData.salary_net || ''}
-              onChange={(e) => updateField('salary_net', Number(e.target.value))}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="salary" className="text-base">
+                Желаемая зарплата (сом)
+              </Label>
+              <Input
+                id="salary"
+                type="number"
+                className="text-base h-12"
+                value={formData.salary_net || ''}
+                onChange={(e) => updateField('salary_net', Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-base">Категория</Label>
+              <Select value={formData.category} onValueChange={(v) => updateField('category', v)}>
+                <SelectTrigger className="text-base h-12">
+                  <SelectValue placeholder="Выберите категорию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {JOB_CATEGORIES.filter((c) => c.id !== JobCategory.ALL).map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -391,7 +375,7 @@ export const ResumeCreatePage = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <Select
-                    value={exp.start_month.toString()}
+                    value={exp.start_month?.toString() ?? ''}
                     onValueChange={(v) => updateExperience(index, 'start_month', parseInt(v))}
                   >
                     <SelectTrigger className="bg-background text-base h-12">
@@ -505,6 +489,7 @@ export const ResumeCreatePage = () => {
         {/* Submit */}
         <div className="w-full flex flex-col items-center gap-2">
           <Button
+            onClick={handleSubmit}
             type="submit"
             disabled={!isFormValid() || isSubmitting}
             className={cn(
@@ -522,7 +507,7 @@ export const ResumeCreatePage = () => {
             </p>
           )}
         </div>
-      </form>
+      </div>
     </div>
   )
 }

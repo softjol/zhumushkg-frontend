@@ -1,7 +1,8 @@
 'use client'
-import { getProfile } from '@/entities/auth/api'
 import { Resume } from '@/entities/resume/model/types'
-import { User } from '@/entities/user/model/types'
+import { getProfile } from '@/entities/user/api'
+import { User } from '@/entities/user/model/store'
+import { calculateAge } from '@/shared/lib/calculateAge'
 import { Button } from '@/shared/ui/button'
 import { MapPin, Mail, User as IconUser, Calendar, Briefcase, GraduationCap } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -20,6 +21,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log(candidate)
     const fetchData = async () => {
       try {
         const data = await getProfile(candidate.user_id)
@@ -35,12 +37,10 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return
-    router.push(`/employer/candidate/${candidate.id}`)
+    router.push(`/employer/candidates/${candidate.id}`)
   }
 
   const skills = candidate.skills || []
-
-  if (loading) return <p className="text-center py-10">Загрузка...</p>
 
   return (
     <div
@@ -63,10 +63,10 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
             </div>
           </div>
           <div className="min-w-0">
-            <div className="text-base font-medium text-slate-800 mb-0.5 truncate">
+            <div className="text-base font-medium text-muted-foreground mb-0.5 truncate">
               {profile?.firstName}
             </div>
-            <h3 className="text-lg font-semibold text-black leading-tight">{candidate.position}</h3>
+            <h3 className="text-lg font-medium text-black leading-tight">{candidate.position}</h3>
           </div>
         </div>
 
@@ -86,27 +86,29 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
                 ? `${candidate.salary_net.toLocaleString('ru-RU')} сом `
                 : 'Договорная'}
             </div>
-            <div className="text-sm text-slate-600 font-medium">в месяц</div>
+            {candidate.salary_net > 0 && (
+              <div className="text-sm text-slate-600 font-medium">в месяц</div>
+            )}
           </div>
         </div>
 
         {/* Meta info — общий для обоих layout */}
         <div className="flex gap-x-3 gap-y-1.5 mt-3">
           {candidate.city && (
-            <span className="flex items-center gap-1 text-slate-600">
+            <span className="flex items-center gap-1 text-slate-600 text-sm lg:text-base">
               <MapPin size={16} className="text-slate-600 shrink-0" />
               {candidate.city}
             </span>
           )}
-          <span className="flex items-center gap-1 text-slate-600">
+          <span className="flex items-center gap-1 text-slate-600 text-sm lg:text-base">
             <Calendar size={16} className="text-slate-600 shrink-0" />
-            {candidate.birth_date}
+            {candidate.birth_date && calculateAge(candidate.birth_date)}
           </span>
-          <span className="flex items-center gap-1 text-slate-600">
+          {/* <span className="flex items-center gap-1 text-slate-600 text-sm lg:text-base">
             <Briefcase size={16} className="text-slate-600 shrink-0" />
-          </span>
+          </span> */}
           {candidate.education && (
-            <span className="flex items-center gap-1 text-slate-600 max-w-[160px]">
+            <span className="flex items-center gap-1 text-slate-600 text-sm lg:text-base max-w-[160px]">
               <GraduationCap size={16} className="text-slate-600 shrink-0" />
               <span className="truncate">{candidate.education.split(/[.,]/)[0]}</span>
             </span>
@@ -178,12 +180,14 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
           {/* Salary + Button внизу */}
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-base font-bold text-slate-900 whitespace-nowrap">
+              <div className="text-base font-semibold text-slate-900 whitespace-nowrap">
                 {candidate.salary_net
                   ? `${candidate.salary_net.toLocaleString('ru-RU')} сом`
                   : 'Договорная'}
               </div>
-              <div className="text-sm text-slate-600 font-medium">в месяц</div>
+              {candidate.salary_net > 0 && (
+                <div className="text-sm text-slate-600 font-medium">в месяц</div>
+              )}
             </div>
             <Button
               onClick={(e) => {

@@ -77,7 +77,7 @@ export const Footer = () => {
         </div>
 
         {/* Subfooter */}
-        <div className="mt-6 lg:pt-8 border-t border-border/50 flex flex-col md:flex-row justify-between items-center gap-6">
+        {/* <div className="mt-6 lg:pt-8 border-t border-border/50 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-sm text-muted-foreground text-center md:text-left">© 2026 Жумуш.kg. Все права защищены.</p>
           <div className="flex flex-col md:flex-row items-center gap-5 md:gap-10 mr-0 md:mr-24">
             <Link
@@ -93,7 +93,7 @@ export const Footer = () => {
               Пользовательское соглашение
             </Link>
           </div>
-        </div>
+        </div> */}
       </div>
     </footer>
   )

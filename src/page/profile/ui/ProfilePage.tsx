@@ -19,6 +19,8 @@ import {
   LogIn,
 } from 'lucide-react'
 import Link from 'next/link'
+import { RoleSwitcher } from '@/features/role-switcher/ui/RoleSwitcher'
+import { useAppLayout } from '@/widgets/app-layout/model/use-app-layout'
 
 const menuItems = [
   { icon: FileText, label: 'Моё резюме', path: '/resume', chevron: true },
@@ -26,21 +28,26 @@ const menuItems = [
 ]
 
 export const ProfilePage = () => {
-  const { user, logout, isAuthenticated } = useUserStore()
+  const { user, logout, isAuthenticated, isLoading } = useUserStore()
+  const { role, switchRole } = useAppLayout()
+  if (isLoading) return null
 
   return (
     <div className="px-4 lg:px-6 pt-4 lg:pt-6">
-      <h1 className=" text-xl font-bold text-foreground mb-4">Кабинет</h1>
+      <h1 className=" text-xl font-bold text-foreground mb-2">Кабинет</h1>
       {isAuthenticated ? (
         <div className="max-w-3xl mx-auto">
           {/* User info */}
-          <div className="flex items-center gap-4 mb-6 p-4 bg-card border border-border rounded-2xl">
+          <div className="lg:hidden">
+            <RoleSwitcher currentRole={role} onRoleChange={switchRole} />
+          </div>    
+          <div className="flex flex-row gap-4 mt-3 mb-6 p-4 bg-card border border-border rounded-2xl">
             <div className="w-14 h-14 rounded-full bg-primary-light flex items-center justify-center">
               <User size={24} className="text-primary" />
             </div>
             <div>
-              <p className="font-semibold text-base text-foreground">{user?.firstName}</p>
-              <p className="text-base text-muted-foreground">{user?.phone}</p>
+              <p className="font-semibold text-lg text-foreground">{user?.firstName}</p>
+              <p className="text-base text-muted-foreground">{user?.phoneNumber}</p>
             </div>
           </div>
 
@@ -65,7 +72,7 @@ export const ProfilePage = () => {
               Настройки
             </h3>
 
-            <div className="flex items-center gap-3 p-3 rounded-xl">
+            {/* <div className="flex items-center gap-3 p-3 rounded-xl">
               <Bell size={22} className="text-muted-foreground" />
               <span className="flex-1 text-base font-medium">Уведомления</span>
               <Switch defaultChecked />
@@ -93,24 +100,24 @@ export const ProfilePage = () => {
               <FileQuestion size={22} className="text-muted-foreground" />
               <span className="flex-1 text-base font-medium">Связаться с поддержкой</span>
               <ChevronRight size={18} className="text-muted-foreground" />
-            </a>
+            </a> */}
           </div>
 
           {/* Danger zone */}
-          <div className="border-t border-border pt-4 mt-4 space-y-2">
+          <div className=" pt-4 mt-4 space-y-2">
             <Button
               onClick={logout}
               variant="outline"
-              className="w-full justify-start rounded-xl text-destructive hover:text-destructive text-base h-12"
+              className="w-full justify-start rounded-2xl text-destructive hover:text-destructive text-base h-12"
             >
               <LogOut size={22} className="mr-3" /> Выйти из аккаунта
             </Button>
-            <Button
+            {/* <Button
               variant="ghost"
               className="w-full justify-start rounded-xl text-destructive/60 hover:text-destructive text-base h-12"
             >
               <Trash2 size={22} className="mr-3" /> Удалить аккаунт
-            </Button>
+            </Button> */}
           </div>
         </div>
       ) : (

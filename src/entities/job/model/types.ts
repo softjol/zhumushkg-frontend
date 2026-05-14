@@ -1,21 +1,25 @@
 export interface Job {
   id: number
   user_id: number
-  profession: string      // категория: "Информационные технологии"
-  position: string        // название: "Middle Node.js Developer"
-  work_schedule: string   // "Полный день, 5/2"
-  requir_respons: string  // требования/обязанности
-  experience_work: string // "От 3 до 5 лет"
+  profession: string
+  position: string
+  category: string | null
+  work_schedule: string
+  requirements: string | null
+  conditions: string | null
+  description: string | null
+  experience_work: string
   remote_work: boolean
   city: string
   work_address: string
   region: string
-  payment_period: string  // "Ежемесячно"
-  salary_net: string      // "180000.00"
+  payment_period: string
+  salary_net: number
   views: number
   favorite: number
   offers: number
   company: string
-  createdAt: string
-  updatedAt: string
+  company_description: string | null
+  createdAt: string // ISO 8601
+  updatedAt: string // ISO 8601
 }

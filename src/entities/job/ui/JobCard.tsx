@@ -1,15 +1,22 @@
 'use client'
 
-import { Heart, MapPin, BriefcaseBusiness, Clock } from 'lucide-react'
+import { Heart, MapPin, BriefcaseBusiness, Clock, Eye } from 'lucide-react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useApplicationsStore } from '@/entities/applications/model/store'
 import { Job } from '../model/types'
 import Link from 'next/link'
 import CompanyIcon from '@/features/company-icon/CompanyIcon'
 import { Button } from '@/shared/ui/button'
 import { useUserStore } from '@/entities/user/model/store'
 import { AuthRequiredModal } from '@/widgets/auth-required/ui/AuthRequiredModal'
+import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog'
 import { addToFavorites, removeFromFavorites } from '@/entities/favorites/api'
 import { useFavoritesStore } from '@/entities/favorites/model/store'
+import { formatDate } from '@/shared/lib/formatDate'
+import { useResumeStore } from '@/entities/resume/model/store'
+import { getMyResume } from '@/entities/resume/api'
+import { applyToVacancy } from '@/entities/applications/api'
 
 interface JobCardProps {
   job: Job
@@ -20,14 +27,32 @@ interface JobCardProps {
 
 export const JobCard = ({ job, isFavProps, favoriteIdProps, onFavoriteChange }: JobCardProps) => {
   const { isAuthenticated } = useUserStore()
-  const [applied, setApplied] = useState(false)
+  const router = useRouter()
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showNoResumeModal, setShowNoResumeModal] = useState(false)
+
+  const { isApplied, addApplied } = useApplicationsStore()
+  const applied = isApplied(job.id)
 
   const handleApply = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     if (!isAuthenticated) {
       setShowAuthModal(true)
+      return
+    }
+    try {
+      const resume = await getMyResume()
+
+      if (!resume) {
+        setShowNoResumeModal(true)
+        return
+      }
+      await applyToVacancy({ vacancy_id: job.id, resume_id: resume.id })
+      addApplied(job.id)
+    } catch (e) {
+      console.error(e)
+      alert('Произошла ошибка при отправке отклика. Пожалуйста, попробуйте снова.')
       return
     }
   }
@@ -62,6 +87,26 @@ export const JobCard = ({ job, isFavProps, favoriteIdProps, onFavoriteChange }: 
     <>
       <AuthRequiredModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
 
+      <Dialog open={showNoResumeModal} onOpenChange={setShowNoResumeModal}>
+        <DialogContent className="max-w-sm rounded-3xl p-8 text-center">
+          <DialogTitle className="text-lg font-semibold text-foreground mb-2">
+            У вас пока нет резюме
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground mb-6">
+            Чтобы откликнуться на вакансию, сначала создайте резюме.
+          </p>
+          <Button
+            className="w-full rounded-2xl"
+            onClick={() => {
+              setShowNoResumeModal(false)
+              router.push('/resume/create')
+            }}
+          >
+            Создать резюме
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       <Link
         href={`/jobs/${job.id}`}
         className="block w-full bg-card rounded-2xl p-5 hover:shadow-xl transition-all group animate-fade-in overflow-hidden shadow lg:hover:shadow-xl lg:ease-in lg:duration-100"
@@ -74,7 +119,7 @@ export const JobCard = ({ job, isFavProps, favoriteIdProps, onFavoriteChange }: 
               </h3>
             </div>
             <span className="text-sm font-medium text-muted-foreground whitespace-nowrap mt-1">
-              <span>{new Date(job.createdAt).toLocaleDateString('ru-RU')}</span>
+              <span>{formatDate(job.createdAt)}</span>
             </span>
           </div>
 
@@ -86,6 +131,16 @@ export const JobCard = ({ job, isFavProps, favoriteIdProps, onFavoriteChange }: 
                 <MapPin size={12} />
                 {job.city}
               </span>
+              <div className="flex items-center gap-2 ml-3 text-sm text-gray-400 font-medium">
+                <span className="flex items-center gap-1 ">
+                  <Eye size={16} />
+                  {job.views}
+                </span>{' '}
+                <span className="flex items-center gap-1 ">
+                  <Heart size={16} />
+                  {job.favorite}
+                </span>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-2.5">
               {(job.work_schedule === 'Свободный график' ||
@@ -108,8 +163,13 @@ export const JobCard = ({ job, isFavProps, favoriteIdProps, onFavoriteChange }: 
         </div>
 
         {job.salary_net && (
-          <p>
-            {job.salary_net} {job.payment_period}
+          <p className="mt-3 text-base font-bold text-foreground">
+            {job.salary_net}
+            {job.payment_period && (
+              <span className="text-sm font-normal text-muted-foreground ml-1">
+                {job.payment_period}
+              </span>
+            )}
           </p>
         )}
 
@@ -128,13 +188,13 @@ export const JobCard = ({ job, isFavProps, favoriteIdProps, onFavoriteChange }: 
             </Button>
           </div>
 
-          <div className="flex items-center gap-3 ml-4">
+          <div className="flex items-center ">
             <button
               onClick={handleFav}
               className="p-2 rounded-full hover:bg-muted transition-colors flex-shrink-0 border border-transparent hover:border-border"
             >
               <Heart
-                size={23}
+                size={24}
                 className={isFav ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}
               />
             </button>

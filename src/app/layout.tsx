@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className={manrope.variable}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased ">{children}</body>
     </html>
   )
 }

@@ -1,8 +1,8 @@
 export interface WorkExperience {
   company: string
   position: string
-  start_month: number
-  start_year: number
+  start_month: number | undefined
+  start_year: number | undefined
   end_month?: number // optional number, не never
   end_year?: number // optional number, не never
   until_now: boolean
@@ -12,6 +12,7 @@ export interface WorkExperience {
 export interface Resume {
   id: number
   user_id: number
+  category: string 
   position: string
   description: string
   work_schedule: string
@@ -29,4 +30,4 @@ export interface Resume {
   updatedAt: string
 }
 
-export type ResumeFormData = Omit<Resume, 'id' | 'user_id' | 'createdAt' | 'updatedAt'>
+export type ResumeFormData = Omit<Resume, 'id'  | 'createdAt' | 'updatedAt'>

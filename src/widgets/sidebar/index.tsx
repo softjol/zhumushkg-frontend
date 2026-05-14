@@ -17,7 +17,7 @@ interface SidebarProps {
 export function Sidebar({ navItems, role, onRoleChange }: SidebarProps) {
   const pathname = usePathname()
 
-  const homePath = role === 'employer' ? '/employer/candidates' : '/'
+  const homePath = role === 'EMPLOYER' ? '/employer/candidates' : '/jobs'
 
   return (
     <aside className="lg:w-[260px] h-full">

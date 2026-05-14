@@ -1,6 +1,6 @@
 export const ROUTES = {
   HOME: '/jobs',
-  
+
   AUTH: {
     LOGIN: '/login',
     REGISTER: '/register',
@@ -12,7 +12,7 @@ export const ROUTES = {
     JOB_DETAIL: (id: string) => `/jobs/${id}`,
     FAVORITES: '/favorites',
     APPLICATIONS: '/applications',
-    CHAT: '/',
+    CHAT: '/chat',
     CHAT_DETAIL: (id: string) => `/chat/${id}`,
     NOTIFICATIONS: '/notifications',
     PROFILE: '/profile',
@@ -23,6 +23,8 @@ export const ROUTES = {
   EMPLOYER: {
     CANDIDATES: '/employer/candidates',
     CANDIDATE_DETAIL: (id: string) => `/employer/candidates/${id}`,
+    CHAT: '/employer/chat',
+    CHAT_DETAIL: (id: string) => `/employer/chat/${id}`,
     VACANCIES: '/employer/vacancies',
     CREATE_VACANCY: '/employer/vacancies/create',
     EDIT_VACANCY: (id: string) => `/employer/vacancies/${id}/edit`,
@@ -33,4 +35,4 @@ export const ROUTES = {
     PRICING: '/employer/pricing',
     FAVORITES: '/employer/favorites',
   },
-} as const;
+} as const

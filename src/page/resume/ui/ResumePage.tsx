@@ -1,16 +1,20 @@
 'use client'
-import { getMyResume } from '@/entities/resume/api'
+import { deleteResume, getMyResume } from '@/entities/resume/api'
 import { useResumeStore } from '@/entities/resume/model/store'
-import { ArrowLeft, Edit2, MapPin, Phone, User } from 'lucide-react'
+import { useUserStore } from '@/entities/user/model/store'
+import { Button } from '@/shared/ui/button'
+import { ArrowLeft, Calendar, Edit2, MapPin, Phone, Trash2, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@/shared/ui/dialog'
+import { calculateAge } from '@/shared/lib/calculateAge'
 
 const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 
 export const ResumePage = () => {
   const router = useRouter()
-  const { resume, isLoading, setResume, setLoading } = useResumeStore()
-
+  const { resume, isLoading, setResume, setLoading, clearResume } = useResumeStore()
+  const { user } = useUserStore()
   useEffect(() => {
     if (resume) return
     setLoading(true)
@@ -29,23 +33,24 @@ export const ResumePage = () => {
 
   const getMonthName = (m: number) => months[m - 1] || ''
   const data = resume
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
+    try {
+      await deleteResume(resume.id)
+      clearResume()
+      router.push('/profile')
+    } catch (err) {
+      console.error(err)
+    }
+  }
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fe] pb-10 font-sans">
       <header className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-muted">
+        <button onClick={() => router.push('/profile')} className="p-1.5 rounded-xl hover:bg-muted">
           <ArrowLeft size={22} />
         </button>
         <span className="flex-1 font-semibold text-lg">Мое резюме</span>
-        <div className="flex lg:hidden justify-end h-full">
-          <button
-            onClick={() => router.push('/resume/edit')}
-            className="bg-transparent border border-slate-500 hover:bg-slate-200 text-slate-500  rounded-xl px-4 py-2 h-auto text-sm font-medium flex items-center gap-2 transition-colors"
-          >
-            <Edit2 size={18} />
-            Редактировать
-          </button>
-        </div>
       </header>
       <div className="max-w-5xl mx-auto w-full p-4 lg:p-8 space-y-2 lg:space-y-4 pt-6 lg:pt-10">
         {/* Top Header Card */}
@@ -57,7 +62,7 @@ export const ResumePage = () => {
               </div>
               <div className="space-y-2 flex-1">
                 <div>
-                  <h1 className="text-lg font-bold text-slate-900 mb-0.5">Иван</h1>
+                  <h1 className="text-lg font-bold text-slate-900 mb-0.5">{user?.firstName}</h1>
                   <p className=" flex justify-start flex-wrap items-center gap-2 font-semibold text-lg">
                     {data.position}{' '}
                     <span className="inline-flex items-center gap-2 text-emerald-600  rounded-xl font-medium text-sm cursor-default">
@@ -66,6 +71,7 @@ export const ResumePage = () => {
                     </span>
                   </p>
                 </div>
+
                 <div className=" hidden lg:flex flex-wrap items-center gap-6 text-slate-600 text-base">
                   <span className="flex items-center gap-2">
                     <Phone size={18} /> {data.phone_number}
@@ -73,29 +79,95 @@ export const ResumePage = () => {
                   <span className="flex items-center gap-2">
                     <MapPin size={18} /> {data.city}
                   </span>
+                  <span className="flex items-center gap-2">
+                    <Calendar size={18} /> {data?.birth_date && calculateAge(data.birth_date)}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="hidden lg:flex justify-end h-full">
-              <button
+            <div className="hidden lg:flex justify-end h-full gap-2">
+              <Button
                 onClick={() => router.push('/resume/edit')}
                 className="bg-transparent border border-slate-500 hover:bg-slate-200 text-slate-500  rounded-xl px-4 py-2 h-auto text-sm font-medium flex items-center gap-2 transition-colors"
               >
                 <Edit2 size={18} />
                 Редактировать
-              </button>
+              </Button>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-transparent border border-red-500 hover:bg-red-200 text-red-500  rounded-xl px-4 py-2 h-auto text-sm font-medium flex items-center gap-2 transition-colors">
+                    <Trash2 size={18} />
+                    Удалить
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-sm p-7 flex flex-col gap-10">
+                  <DialogTitle className="text-xl font-medium text-center">
+                    Удалить резюме
+                  </DialogTitle>
+                  <div className="flex w-full justify-center gap-3">
+                    <DialogClose asChild>
+                      <Button variant="outline">Отмена</Button>
+                    </DialogClose>
+                    <Button
+                      onClick={handleSubmit}
+                      type="submit"
+                      className="bg-red-500 hover:bg-red-600 text-white"
+                    >
+                      Удалить
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
           {/* Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-0 lg:gap-6">
+            <div className="flex lg:hidden justify-start gap-7 py-3 h-full">
+              <Button
+                onClick={() => router.push('/resume/edit')}
+                className="bg-transparent border border-slate-500 hover:bg-slate-200 text-slate-500  rounded-xl px-4 py-2 h-auto text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                <Edit2 size={18} />
+                Редактировать
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-transparent border border-red-500 hover:bg-red-200 text-red-500  rounded-xl px-4 py-2 h-auto text-sm font-medium flex items-center gap-2 transition-colors">
+                    <Trash2 size={18} />
+                    Удалить
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-sm p-7 flex flex-col gap-10">
+                  <DialogTitle className="text-xl font-medium text-center">
+                    Удалить резюме
+                  </DialogTitle>
+                  <div className="flex w-full justify-center gap-3">
+                    <DialogClose asChild>
+                      <Button variant="outline">Отмена</Button>
+                    </DialogClose>
+                    <Button
+                      onClick={handleSubmit}
+                      type="submit"
+                      className="bg-red-500 hover:bg-red-600 text-white"
+                    >
+                      Удалить
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
             <div className=" flex lg:hidden flex-col items-start gap-3 text-slate-600 text-base mt-5 mb-2">
               <span className="flex items-center gap-2">
                 <Phone size={18} /> {data.phone_number}
               </span>
               <span className="flex items-center gap-2">
                 <MapPin size={18} /> {data.city}
+              </span>
+              <span className="flex items-center gap-2">
+                <Calendar size={18} /> {data?.birth_date && calculateAge(data.birth_date)}
               </span>
             </div>
             <div className="p-1 lg:p-4 flex items-center gap-2">
@@ -130,7 +202,7 @@ export const ResumePage = () => {
           </h3>
 
           <div className="space-y-10">
-            {data.work_experience.map((exp: any, index: number) => (
+            {data.work_experience?.map((exp: any, index: number) => (
               <div
                 key={index}
                 className="flex flex-col sm:flex-row gap-4 items-start pb-6 border-b border-slate-50 last:border-0 last:pb-0"
@@ -142,10 +214,10 @@ export const ResumePage = () => {
                       <p className="text-primary font-medium text-base mt-1">{exp.company}</p>
                     </div>
                     <span className="text-slate-400 text-sm">
-                      {getMonthName(exp.start_month)} {exp.start_year} —{' '}
+                      {getMonthName(exp.end_month)} {exp.end_year} —{' '}
                       {exp.until_now
                         ? 'по настоящее время'
-                        : `${getMonthName(exp.end_month)} ${exp.end_year}`}
+                        : `${getMonthName(exp.start_month)} ${exp.start_year}`}
                     </span>
                   </div>
 
@@ -155,7 +227,7 @@ export const ResumePage = () => {
                 </div>
               </div>
             ))}
-            {data.work_experience.length === 0 && (
+            {data.work_experience?.length === 0 && (
               <p className="text-slate-500 text-base">Нет опыта работы</p>
             )}
           </div>
@@ -188,16 +260,14 @@ export const ResumePage = () => {
             Ключевые навыки
           </h3>
           <div className="flex flex-wrap gap-3">
-            {data.skills.map(
-              (skill: string, i: number) => (
-                <span
-                  key={i}
-                  className="bg-slate-100 text-slate-800 px-4 py-2 rounded-xl text-base font-medium"
-                >
-                  {skill.trim()}
-                </span>
-              ),
-            )}
+            {data.skills.map((skill: string, i: number) => (
+              <span
+                key={i}
+                className="bg-slate-100 text-slate-800 px-4 py-2 rounded-xl text-base font-medium"
+              >
+                {skill.trim()}
+              </span>
+            ))}
           </div>
         </div>
       </div>
