@@ -6,7 +6,7 @@ import { getConversations } from '@/entities/chat/api'
 import { getVacancy } from '@/entities/vacancy/api'
 import { useUserStore } from '@/entities/user/model/store'
 
-export default function ChatDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EmployerChatDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const { token } = useUserStore()
@@ -32,7 +32,7 @@ export default function ChatDetailPage({ params }: { params: Promise<{ id: strin
       chatId={id}
       title={company}
       subtitle={position}
-      onBack={() => router.push('/chat')}
+      onBack={() => router.push('/employer/chat')}
     />
   )
 }

@@ -9,7 +9,7 @@ export interface User {
   phoneNumber: string
   phoneConfirmed: string
   smsCode: string
-  role: 'JOB_SEEKER' | 'EMPLOYER'
+  role: 'JOB_SEEKER' | 'EMPLOYER' | 'ADMIN'
 }
 
 type TokenPayload = {
@@ -67,7 +67,7 @@ export const useUserStore = create<UserStore>()(
           phoneNumber: decoded.phoneNumber,
           phoneConfirmed: String(decoded.phoneConfirmed),
           smsCode: decoded.smsCode,
-          role: decoded.role as User['role'],
+          role: decoded.role.toUpperCase() as User['role'],
         }
         set({ token, user, isAuthenticated: true })
       },

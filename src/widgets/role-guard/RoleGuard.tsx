@@ -4,9 +4,16 @@ import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/entities/user/model/store'
 
 type RoleGuardProps = {
-  allowedRole: 'JOB_SEEKER' | 'EMPLOYER'
+  allowedRole: 'JOB_SEEKER' | 'EMPLOYER' | 'ADMIN'
   children: React.ReactNode
 }
+
+function getRoleRedirect(role: string): string {
+  if (role === 'EMPLOYER') return '/employer/candidates'
+  if (role === 'ADMIN') return '/admin'
+  return '/jobs'
+}
+
 export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
   const router = useRouter()
   const { user, isAuthenticated, isLoading } = useUserStore()
@@ -20,7 +27,7 @@ export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
 
     const role = user.role.toUpperCase()
     if (role !== allowedRole) {
-      router.replace(role === 'EMPLOYER' ? '/employer/candidates' : '/jobs')
+      router.replace(getRoleRedirect(role))
     }
   }, [isLoading, isAuthenticated, user, allowedRole])
 

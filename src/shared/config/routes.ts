@@ -35,4 +35,16 @@ export const ROUTES = {
     PRICING: '/employer/pricing',
     FAVORITES: '/employer/favorites',
   },
+  ADMIN: {
+    EMPLOYERS: '/admin/employers',
+    CANDIDATES: '/admin/candidates',
+    VACANCIES: '/admin/vacancies',
+    APPLICATIONS: '/admin/applications',
+    CONTENT: '/admin/content',
+    STATISTICS: '/admin/statistics',
+    EMPLOYER_DETAIL: (id: string) => `/admin/employers/${id}`,
+    CANDIDATE_DETAIL: (id: string) => `/admin/candidates/${id}`,
+    VACANCY_DETAIL: (id: string) => `/admin/vacancies/${id}`,
+    APPLICATION_DETAIL: (id: string) => `/admin/applications/${id}`,
+  },
 } as const
