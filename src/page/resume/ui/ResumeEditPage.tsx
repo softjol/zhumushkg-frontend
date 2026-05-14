@@ -388,7 +388,7 @@ export const ResumeEditPage = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <Select
-                    value={exp.start_month.toString()}
+                    value={(exp.start_month ?? 1).toString()}
                     onValueChange={(v) => updateExperience(index, 'start_month', parseInt(v))}
                   >
                     <SelectTrigger className="bg-background text-base h-12">

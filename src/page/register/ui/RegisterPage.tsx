@@ -95,7 +95,7 @@ export const RegisterPage = () => {
         </Link>
       </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20 -mt-20 sm:mt-0">
         <div className="w-full max-w-sm" key={step}>
           <div className="flex items-center justify-center gap-2 mb-10">
             <div className="text-[38px] flex items-center font-bold">
@@ -114,7 +114,7 @@ export const RegisterPage = () => {
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
                 Заполните данные для регистрации
               </p>
-              <div className="flex gap-7 mb-5">
+              <div className="flex gap-4 sm:gap-7 mb-5">
                 <div
                   onClick={() => setRole('JOB_SEEKER')}
                   className={`w-full bg-muted p-5 flex justify-center items-center text-base font-medium  cursor-pointer rounded-2xl shadow border-[2px] border-muted hover:border-primary transition duration-100 ${role === 'JOB_SEEKER' ? 'border-primary bg-primary/20' : ''}`}
@@ -123,7 +123,7 @@ export const RegisterPage = () => {
                 </div>
                 <div
                   onClick={() => setRole('EMPLOYER')}
-                  className={`w-full bg-muted p-5 text-base font-medium cursor-pointer rounded-2xl shadow border-[2px] border-muted hover:border-primary transition duration-100 ${role === 'EMPLOYER' ? 'border-primary bg-primary/20' : ''}`}
+                  className={`w-full bg-muted p-5 text-center text-base font-medium cursor-pointer rounded-2xl shadow border-[2px] border-muted hover:border-primary transition duration-100 ${role === 'EMPLOYER' ? 'border-primary bg-primary/20' : ''}`}
                 >
                   Ищу сотрудника
                 </div>
