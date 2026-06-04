@@ -29,7 +29,14 @@ export const EmployerVacancyCard = ({ vacancy, handleDelete }: Props) => {
                 {vacancy.status}
               </Badge> */}
             </div>
-            <p className="text-lg text-muted-foreground font-medium mt-1">Оплата: <span className='text-green-600'>{vacancy.salary_net.toLocaleString('ru-RU')}</span> сом</p>
+            <p className="text-lg text-muted-foreground font-medium mt-1">
+              Оплата:{' '}
+              {vacancy.salary_net > 0 ? (
+                <span className="text-green-600">{vacancy.salary_net.toLocaleString('ru-RU')} сом</span>
+              ) : (
+                <span className="text-green-600">Договорная</span>
+              )}
+            </p>
             <p className="text-sm text-muted-foreground mt-0.5">
              <span>Вакансия опубликована: {formatDate(vacancy.createdAt)}</span>
             </p>

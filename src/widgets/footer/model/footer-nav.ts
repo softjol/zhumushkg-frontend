@@ -23,7 +23,7 @@ export const footerNavItems = [
       id: 'company',
       title: 'Компания',
       links: [
-        { to: '/about', label: 'Вакансии' },
+        { to: '/jobs', label: 'Вакансии' },
         { to: '/favorites', label: 'Избранное' },
         { to: '/chat', label: 'Чат' },
         { to: '/profile', label: 'Кабинет' },

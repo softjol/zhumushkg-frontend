@@ -1,28 +1,31 @@
 import { useUserStore } from "@/entities/user/model/store"
 import { Notification } from "../model/type"
 
-
-
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 export async function getNotifications(): Promise<Notification[]> {
-    const {user} = useUserStore.getState()
+    const { user, token } = useUserStore.getState()
 
     const res = await fetch(`${BASE_URL}/notification/my/${user?.id}`, {
         method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
 
-    if(!res.ok){
+    if (!res.ok) {
         throw new Error('Не удалось получить уведомления')
     }
     return res.json()
 }
 
-export async function readNotications(id: number): Promise<Notification[]> {
-  const res = await fetch(`${BASE_URL}/notifications/my/${id}`, {
+export async function readNotification(id: number): Promise<void> {
+  const { token } = useUserStore.getState()
+  const res = await fetch(`${BASE_URL}/notification/${id}/read`, {
     method: 'PATCH',
-    body: JSON.stringify(id),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
-  if (!res.ok) throw new Error('Не удалось прочитать уведомления')
-  return res.json()
+  if (!res.ok) throw new Error('Не удалось прочитать уведомление')
+}
+
+export async function readAllNotifications(ids: number[]): Promise<void> {
+  await Promise.all(ids.map((id) => readNotification(id)))
 }

@@ -81,19 +81,16 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-svh bg-background flex flex-col">
-      <header className="px-4 py-3 flex items-center gap-3">
-        <Link
-          href={step === 'otp' ? '#' : 'onboarding'}
-          onClick={(e) => {
-            if (step === 'otp') {
-              e.preventDefault()
-              setStep('phone')
-            }
-          }}
-          className="p-1.5 rounded-xl hover:bg-muted transition-colors inline-flex"
-        >
-          <ArrowLeft size={22} />
-        </Link>
+      <header className="px-4 py-3 flex items-center gap-3 relative z-10">
+        {step === 'otp' && (
+          <button
+            type="button"
+            onClick={() => setStep('phone')}
+            className="p-1.5 rounded-xl hover:bg-muted transition-colors inline-flex"
+          >
+            <ArrowLeft size={22} />
+          </button>
+        )}
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20 -mt-20 sm:mt-0">
@@ -192,6 +189,7 @@ export const LoginPage = () => {
                   <>Отправить снова через 0:{timer.toString().padStart(2, '0')}</>
                 ) : (
                   <button
+                    type="button"
                     className="text-primary font-medium hover:underline"
                     onClick={handleSendCode}
                   >

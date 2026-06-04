@@ -8,18 +8,18 @@ import { getFavorites } from '@/entities/favorites/api'
 import { useFavoritesStore } from '@/entities/favorites/model/store'
 import { useApplicationsStore } from '@/entities/applications/model/store'
 import { Pagination } from '@/features/pagination/Pagination'
-import { getMyApplications } from '@/entities/applications/api'
+// import { getMyApplications } from '@/entities/applications/api'
 import { useJobStore } from '@/entities/job/model/store'
 import { useFilterStore } from '@/entities/job/model/filterStore'
 import { JobCardSkeleton } from '@/entities/job/ui/JobCardSkeleton'
 
 export const JobList = () => {
   const [currentPage, setCurrentPage] = useState(1)
-  const jobsPerPage = 9
+  const jobsPerPage = 15
 
   const isAuthenticated = useUserStore((s) => s.isAuthenticated)
   const { setFavorites } = useFavoritesStore()
-  const { setApplied } = useApplicationsStore()
+  // const { setApplied } = useApplicationsStore()
 
   // Читаем из стора вместо локального useState
   const jobs = useJobStore((s) => s.jobs)
@@ -81,9 +81,10 @@ export const JobList = () => {
     if (!isAuthenticated) return
     const fetchUserData = async () => {
       try {
-        const [favorites, applications] = await Promise.all([getFavorites(), getMyApplications()])
+        const favorites = await getFavorites()
         setFavorites(new Map(favorites.map((f) => [f.vacancy_id, f.id])))
-        setApplied(new Set(applications.map((a) => a.vacancy_id)))
+        // const applications = await getMyApplications()
+        // setApplied(new Set(applications.map((a) => a.vacancy_id)))
       } catch (e) {
         console.error(e)
       }

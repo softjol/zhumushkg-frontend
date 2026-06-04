@@ -76,3 +76,17 @@ export async function createConversation(token: string, vacancyId: string): Prom
   if (!res.ok) throw new Error('Ошибка создания чата')
   return res.json()
 }
+
+// Работодатель открывает чат с кандидатом напрямую
+export async function openConversationWithCandidate(
+  token: string,
+  candidateId: number,
+): Promise<Conversation> {
+  const res = await fetch(`${BASE_URL}/conversations`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ candidateId }),
+  })
+  if (!res.ok) throw new Error('Ошибка создания чата')
+  return res.json()
+}

@@ -7,21 +7,22 @@ import { SearchBar } from '@/features/search-bar/ui/SearchBar'
 import Link from 'next/link'
 import iconLogo from '@/assets/icons/Logo.svg'
 import Image from 'next/image'
-import { Bell } from 'lucide-react' 
+import { Bell } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getNotifications } from '@/entities/notifications/api'
+import { useNotificationStore } from '@/entities/notifications/model/store'
 
 export function Header() {
-  const [isNotification, setIsNotification] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const { isAuthenticated, user } = useUserStore()
+  const { hasUnread, setHasUnread } = useNotificationStore()
   const router = useRouter()
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         const data = await getNotifications()
-        data.length !== 0 && setIsNotification(true)
+        setHasUnread(data.some((n) => !n.isRead))
       } catch (error) {
         console.log('Ошибка при загрузке уведомлений:', error)
       }
@@ -33,7 +34,8 @@ export function Header() {
     if (!isAuthenticated) {
       setShowAuthModal(true)
     } else {
-      const path = user?.role?.toUpperCase() === 'EMPLOYER' ? '/employer/notifications' : '/notifications'
+      const path =
+        user?.role?.toUpperCase() === 'EMPLOYER' ? '/employer/notifications' : '/notifications'
       router.push(path)
     }
   }
@@ -48,7 +50,7 @@ export function Header() {
           className="group bg-muted p-2.5 rounded-full cursor-pointer hover:shadow-md transition-all relative "
         >
           <Bell className="text-muted-foreground group-hover:text-primary transition-colors" />
-          {isNotification && (
+          {hasUnread && (
             <div className="absolute w-1.5 h-1.5 bg-primary rounded-full top-2 right-2"></div>
           )}
         </div>
@@ -64,10 +66,10 @@ export function Header() {
         </Link>
         <div
           onClick={handleNotificationClick}
-          className="group bg-muted p-2 rounded-full cursor-pointer hover:shadow-md transition-all "
+          className="group bg-muted p-2.5 rounded-full cursor-pointer hover:shadow-md transition-all relative "
         >
-          <Bell className=" text-muted-foreground group-hover:text-primary transition-colors" />
-          {isNotification && (
+          <Bell className="text-muted-foreground group-hover:text-primary transition-colors" />
+          {hasUnread && (
             <div className="absolute w-1.5 h-1.5 bg-primary rounded-full top-2 right-2"></div>
           )}
         </div>

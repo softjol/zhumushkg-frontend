@@ -5,8 +5,8 @@ import { useFavoritesStore } from '@/entities/favorites/model/store'
 import { getVacancyById } from '@/entities/job/api'
 import { Job } from '@/entities/job/model/types'
 import { useUserStore } from '@/entities/user/model/store'
-import { useResumeStore } from '@/entities/resume/model/store'
 import { AuthRequiredModal } from '@/widgets/auth-required/ui/AuthRequiredModal'
+import { createConversation, getConversations } from '@/entities/chat/api'
 import CompanyIcon from '@/features/company-icon/CompanyIcon'
 import { Button } from '@/shared/ui/button'
 import {
@@ -20,23 +20,14 @@ import {
   DollarSign,
   Building2,
   Calendar,
-  Eye,
+  BadgeCent,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { formatDate } from '@/shared/lib/formatDate'
 import { useApplicationsStore } from '@/entities/applications/model/store'
-import { getMyResume } from '@/entities/resume/api'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/shared/ui/dialog'
-import { applyToVacancy, getMyApplications } from '@/entities/applications/api'
-import { Skeleton } from '@/shared/ui/skeleton'
+// import { getMyApplications } from '@/entities/applications/api'
 import { JobDetailPageSkeleton } from './JobDetailPageSkeleton'
 
 interface JobDetailPageProps {
@@ -44,14 +35,13 @@ interface JobDetailPageProps {
 }
 
 export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
-  const { isAuthenticated } = useUserStore()
+  const { isAuthenticated, token } = useUserStore()
   const [job, setJob] = useState<Job | null>(null)
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [showResumeModal, setShowResumeModal] = useState(false)
 
-  const { isApplied, addApplied, setApplied } = useApplicationsStore()
+  const { isApplied } = useApplicationsStore()
   const applied = isApplied(jobId)
 
   const { isFavorite, getFavoriteId, addFavorite, removeFavorite, setFavorites } =
@@ -70,9 +60,9 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
             getFavorites().then((list) => {
               setFavorites(new Map(list.map((f) => [f.vacancy_id, f.id])))
             }),
-            getMyApplications().then((apps) => {
-              setApplied(new Set(apps.map((a) => a.vacancy_id)))
-            }),
+            // getMyApplications().then((apps) => {
+            //   setApplied(new Set(apps.map((a) => a.vacancy_id)))
+            // }),
           )
         }
 
@@ -107,31 +97,64 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
     }
   }
 
-  const handleApply = async () => {
+  // OLD: handleApply (resume check + applyToVacancy)
+  // const handleApply = async () => {
+  //   if (!isAuthenticated) {
+  //     setShowAuthModal(true)
+  //     return
+  //   }
+  //   try {
+  //     const resume = await getMyResume()
+  //     if (!resume) {
+  //       setShowResumeModal(true)
+  //       return
+  //     }
+  //     await applyToVacancy({ vacancy_id: jobId, resume_id: resume.id })
+  //     addApplied(jobId)
+  //   } catch (e) {
+  //     console.error(e)
+  //     alert('Произошла ошибка при отправке отклика. Пожалуйста, попробуйте снова.')
+  //   }
+  // }
+
+  const handleApply = () => {
+    if (job?.company_description) {
+      window.open(job.company_description, '_blank')
+    }
+  }
+
+  const handleChat = async () => {
     if (!isAuthenticated) {
       setShowAuthModal(true)
       return
     }
     try {
-      const resume = await getMyResume()
-      if (!resume) {
-        setShowResumeModal(true)
-        return
+      const existing = await getConversations(token!)
+      const found = existing.find((c) => c.vacancy_id === jobId)
+      if (found) {
+        router.push(`/chat/${found.id}`)
+      } else {
+        const conv = await createConversation(token!, String(jobId))
+        router.push(`/chat/${conv.id}`)
       }
-      await applyToVacancy({ vacancy_id: jobId, resume_id: resume.id })
-      addApplied(jobId)
     } catch (e) {
       console.error(e)
-      alert('Произошла ошибка при отправке отклика. Пожалуйста, попробуйте снова.')
     }
   }
 
-  const handleChat = () => {
-    if (!isAuthenticated) {
-      setShowAuthModal(true)
-      return
+  const handleShare = async () => {
+    const url = window.location.href
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url)
+    } else {
+      const el = document.createElement('textarea')
+      el.value = url
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
     }
-    router.push('/chat')
+    toast.success('Ссылка скопирована')
   }
 
   if (loading) return <JobDetailPageSkeleton/>
@@ -159,25 +182,11 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
     ...(job.payment_period
       ? [{ icon: Calendar, label: 'Период оплаты', value: job.payment_period }]
       : []),
-    { icon: DollarSign, label: 'Зарплата', value: job.salary_net || 'По договорённости' },
+    { icon: BadgeCent, label: 'Зарплата', value: job.salary_net ? String(job.salary_net) : 'Договорная' },
   ]
-
   return (
     <div className="min-h-screen bg-background ">
       <AuthRequiredModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      <Dialog open={showResumeModal} onOpenChange={setShowResumeModal}>
-        <DialogContent className="max-w-lg p-10 text-center">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-medium">
-              У вас пока нет резюме чтобы откликнуться
-            </DialogTitle>
-            <DialogDescription>
-              Пожалуйста, создайте резюме перед откликом на вакансию.
-            </DialogDescription>
-          </DialogHeader>
-          <Button onClick={() => router.push('/resume')}>Создать резюме</Button>
-        </DialogContent>
-      </Dialog>
 
       {/* Header */}
       <header className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3 flex items-center justify-between">
@@ -201,7 +210,7 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
               className={isFav ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}
             />
           </button>
-          <button className="p-2 rounded-xl hover:bg-muted transition-colors" title="Поделиться">
+          <button onClick={handleShare} className="p-2 rounded-xl hover:bg-muted transition-colors" title="Поделиться">
             <Share2 size={22} className="text-muted-foreground" />
           </button>
         </div>
@@ -225,6 +234,7 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
                 />
               </button>
               <button
+                onClick={handleShare}
                 className="p-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
                 title="Поделиться"
               >
@@ -243,12 +253,12 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
                 Опубликовано: {formatDate(job.createdAt)}
               </span>
 
-              <div className="flex items-center gap-1 mx-1 text-gray-400 text-sm lg:order-1">
+              {/* <div className="flex items-center gap-1 mx-1 text-gray-400 text-sm lg:order-1">
                 <Eye size={16} />
                 {job.views}
                 <Heart size={16} className="ml-2" />
                 {job.favorite}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -265,7 +275,7 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
         {/* Responsibilities */}
         {job.description && (
           <section>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Обязанности</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Описание</h3>
             <ul className="space-y-1.5">
               <li className="text-base text-black font-medium flex items-start gap-2">
                 <span className="w-[5px] h-[5px] rounded-full bg-black mt-2 flex-shrink-0" />
@@ -308,13 +318,13 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
           >
             {applied ? 'Вы откликнулись ✓' : 'Откликнуться'}
           </Button>
-          <Button
+          {/* <Button
             variant="outline"
             className="hidden md:block flex-1 rounded-2xl h-12"
             onClick={handleChat}
           >
             Написать
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>

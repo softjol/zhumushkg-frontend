@@ -1,7 +1,7 @@
 'use client'
-import { ArrowLeft, MoreVertical, Send, Check, CheckCheck } from 'lucide-react'
+import { ArrowLeft, MoreVertical, Send, CheckCheck } from 'lucide-react'
 import { Input } from '@/shared/ui/input'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import CompanyIcon from '@/features/company-icon/CompanyIcon'
 import { useUserStore } from '@/entities/user/model/store'
 import { useChat } from '@/entities/chat/model/useChat'
@@ -11,19 +11,31 @@ interface ChatDetailViewProps {
   title?: string
   subtitle?: string
   onBack?: () => void
+  candidateId?: number
+  hrId?: number
 }
 
-export const ChatDetailView = ({ chatId, title, subtitle, onBack }: ChatDetailViewProps) => {
+export const ChatDetailView = ({ chatId, title, subtitle, onBack, candidateId, hrId }: ChatDetailViewProps) => {
   const { token, user } = useUserStore()
-  const { messages, loading, error, send } = useChat(token, chatId, user?.id ?? null)
+
+  // Определяем "свой" ID по роли в этом чате.
+  // Когда кандидат и работодатель — один человек, user.id одинаковый,
+  // поэтому используем candidate_id / hr_id из conversation.
+  const myIdInConversation = user?.role === 'EMPLOYER' ? hrId : candidateId
+
+  const { messages, loading, error, send } = useChat(
+    token,
+    chatId,
+    myIdInConversation != null ? String(myIdInConversation) : user?.id ?? null,
+  )
   const [message, setMessage] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Автоскролл вниз когда приходят новые сообщения
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
+//   useEffect(() => {
+//     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+//   }, [messages])
+  console.log(messages)
   const handleSend = async () => {
     if (!message.trim()) return
     await send(message)
@@ -59,7 +71,10 @@ export const ChatDetailView = ({ chatId, title, subtitle, onBack }: ChatDetailVi
         {loading && <p className="text-center text-muted-foreground text-sm">Загрузка...</p>}
         {error && <p className="text-center text-destructive text-sm">{error}</p>}
         {messages.map((msg) => {
-          const isMine = Number(msg.sender_id ?? msg.senderId) === Number(user?.id)
+          const senderId = Number(msg.sender_id ?? msg.senderId)
+          const isMine = myIdInConversation != null
+            ? senderId === myIdInConversation
+            : senderId === Number(user?.id)
           return (
             <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
               <div

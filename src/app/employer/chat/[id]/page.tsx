@@ -13,13 +13,18 @@ export default function EmployerChatDetailPage({ params }: { params: Promise<{ i
 
   const [position, setPosition] = useState('')
   const [company, setCompany] = useState('')
+  const [candidateId, setCandidateId] = useState<number | undefined>()
+  const [hrId, setHrId] = useState<number | undefined>()
 
   useEffect(() => {
     if (!token) return
     getConversations(token)
       .then(async (data) => {
         const conv = data.find((c) => String(c.id) === id)
-        if (!conv?.vacancy_id) return
+        if (!conv) return
+        setCandidateId(conv.candidate_id)
+        setHrId(conv.hr_id)
+        if (!conv.vacancy_id) return
         const vacancy = await getVacancy(conv.vacancy_id)
         setPosition(vacancy.position ?? '')
         setCompany(vacancy.company ?? '')
@@ -33,6 +38,8 @@ export default function EmployerChatDetailPage({ params }: { params: Promise<{ i
       title={company}
       subtitle={position}
       onBack={() => router.push('/employer/chat')}
+      candidateId={candidateId}
+      hrId={hrId}
     />
   )
 }

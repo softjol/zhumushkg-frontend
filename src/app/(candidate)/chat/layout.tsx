@@ -15,7 +15,7 @@ interface EnrichedConversation extends Conversation {
 }
 
 export default function ChatLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, token } = useUserStore()
+  const { isAuthenticated, token, user } = useUserStore()
   const params = useParams()
   const activeId = params?.id as string | undefined
 
@@ -56,7 +56,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   }, [token])
 
   const withMessages = conversations.filter(
-    (conv) => conv.messages && conv.messages.length > 0
+    (conv) => conv.candidate_id === Number(user?.id) && conv.messages && conv.messages.length > 0
   )
 
   if (!isAuthenticated) {
@@ -78,7 +78,19 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           <h1 className="text-xl font-bold text-foreground">Чаты</h1>
         </div>
         <div className="flex-1 overflow-y-auto p-2 lg:p-3 space-y-1">
-          {loading && <p className="text-center py-10 text-muted-foreground text-sm">Загрузка...</p>}
+          {loading && Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 rounded-2xl animate-pulse">
+              <div className="shrink-0 h-12 w-12 rounded-full bg-muted" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-32 rounded bg-muted" />
+                  <div className="h-3 w-10 rounded bg-muted" />
+                </div>
+                <div className="h-3 w-24 rounded bg-muted" />
+                <div className="h-3 w-40 rounded bg-muted" />
+              </div>
+            </div>
+          ))}
           {!loading && withMessages.length === 0 && (
             <div className="text-center py-10 opacity-50">
               <MessageCircle size={32} className="mx-auto mb-2" />

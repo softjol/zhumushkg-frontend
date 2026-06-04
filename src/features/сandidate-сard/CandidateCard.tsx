@@ -1,10 +1,11 @@
 'use client'
 import { Resume } from '@/entities/resume/model/types'
 import { getProfile } from '@/entities/user/api'
-import { User } from '@/entities/user/model/store'
+import { User, useUserStore } from '@/entities/user/model/store'
+import { openConversationWithCandidate } from '@/entities/chat/api'
 import { calculateAge } from '@/shared/lib/calculateAge'
 import { Button } from '@/shared/ui/button'
-import { MapPin, Mail, User as IconUser, Calendar, Briefcase, GraduationCap } from 'lucide-react'
+import { MapPin, Mail, User as IconUser, Calendar, GraduationCap } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -17,8 +18,24 @@ interface CandidateCardProps {
 
 export default function CandidateCard({ candidate }: CandidateCardProps) {
   const router = useRouter()
+  const { token } = useUserStore()
   const [profile, setProfile] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [contacting, setContacting] = useState(false)
+
+  const handleContact = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!token || contacting) return
+    setContacting(true)
+    try {
+      const conv = await openConversationWithCandidate(token, candidate.user_id)
+      router.push(`/employer/chat/${conv.id}`)
+    } catch (err) {
+      console.error('Не удалось открыть чат:', err)
+    } finally {
+      setContacting(false)
+    }
+  }
 
   useEffect(() => {
     console.log(candidate)
@@ -144,10 +161,8 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
             </div>
           )}
           <Button
-            onClick={(e) => {
-              e.stopPropagation()
-              router.push('/chat')
-            }}
+            onClick={handleContact}
+            disabled={contacting}
             className="h-10 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-1.5 text-base font-medium shrink-0 shadow-none"
           >
             <Mail size={16} />

@@ -32,11 +32,7 @@ export const Header = () => {
               <Link
                 key={item}
                 href={
-                  item === 'Для работодателей'
-                    ? '/#'
-                    : item === 'Для соискателей'
-                      ? '/#'
-                      : '/#'
+                  item === 'Для работодателей' ? '/#' : item === 'Для соискателей' ? '/#' : '/#'
                 }
                 className="hover:text-white text-white/60 transition-colors"
               >
@@ -46,10 +42,16 @@ export const Header = () => {
           </nav>
 
           <div className="hidden md:flex gap-4 items-center text-sm font-medium">
-            <Link href={'/login'}><button className="text-white/60 hover:text-white transition-colors px-2">Войти</button></Link>
-            <Link href={'/register'}><button className="bg-white text-[#111] px-4 py-2 rounded-xl font-semibold hover:bg-white/90 transition-colors">
-              Зарегистрироваться
-            </button></Link>
+            <Link href={'/login'}>
+              <button className="text-white/60 hover:text-white transition-colors px-2">
+                Войти
+              </button>
+            </Link>
+            <Link href={'/register'}>
+              <button className="bg-white text-[#111] px-4 py-2 rounded-xl font-semibold hover:bg-white/90 transition-colors">
+                Зарегистрироваться
+              </button>
+            </Link>
           </div>
 
           <button
@@ -136,12 +138,16 @@ export const Header = () => {
         </nav>
 
         <div className="px-5 pb-8 pt-4 flex flex-col gap-3 border-t border-white/5 shrink-0">
-          <button className="w-full text-white/80 border border-white/20 px-4 py-3 rounded-xl text-sm font-medium hover:border-white/40 hover:text-white transition-colors">
-            Войти
-          </button>
-          <button className="w-full bg-white text-[#111] px-4 py-3 rounded-xl text-sm font-bold hover:bg-white/90 transition-colors">
-            Зарегистрироваться
-          </button>
+          <Link href={'/login'}>
+            <button className="w-full text-white/80 border border-white/20 px-4 py-3 rounded-xl text-sm font-medium hover:border-white/40 hover:text-white transition-colors">
+              Войти
+            </button>
+          </Link>
+          <Link href={'/register'}>
+            <button className="w-full bg-white text-[#111] px-4 py-3 rounded-xl text-sm font-bold hover:bg-white/90 transition-colors">
+              Зарегистрироваться
+            </button>
+          </Link>
         </div>
       </div>
     </>

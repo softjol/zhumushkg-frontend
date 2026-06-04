@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/shared/ui/button'
 import { ExternalLink, FileText, MapPin, EllipsisVertical } from 'lucide-react'
 import Link from 'next/link'
-import { getMyApplications, removeApplication } from '@/entities/applications/api'
+// import { getMyApplications, removeApplication } from '@/entities/applications/api'
 import { Application } from '@/entities/applications/model/type'
 import { useUserStore } from '@/entities/user/model/store'
 import { AuthRequired } from '@/widgets/auth-required/ui/AuthRequired'
@@ -49,8 +49,9 @@ export const ApplicationsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getMyApplications()
-        setApplications(res)
+        // const res = await getMyApplications()
+        // setApplications(res)
+        setApplications([])
       } catch (e) {
         console.log(e)
       } finally {
@@ -62,8 +63,8 @@ export const ApplicationsPage = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await removeApplication(id)
-      setApplications((prev) => prev?.filter((app) => app.id !== id) ?? prev)
+      // await removeApplication(id)
+      // setApplications((prev) => prev?.filter((app) => app.id !== id) ?? prev)
     } catch (e) {
       console.log(e)
     }

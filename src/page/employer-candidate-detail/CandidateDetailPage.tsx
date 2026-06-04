@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react'
 import { getResume } from '@/entities/resume/api'
 import { Resume } from '@/entities/resume/model/types'
 import { getProfile } from '@/entities/user/api'
+import { openConversationWithCandidate } from '@/entities/chat/api'
+import { useUserStore } from '@/entities/user/model/store'
 import { CandidateDetailSkeleton } from './CandidateDetailSkeleton'
 import { calculateAge } from '@/shared/lib/calculateAge'
 import { Button } from '@/shared/ui/button'
@@ -18,9 +20,25 @@ interface CandidateDetailPageProps {
 
 export const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
   const router = useRouter()
+  const { token } = useUserStore()
   const [resume, setResume] = useState<Resume | null>(null)
   const [userName, setUserName] = useState('')
   const [loading, setLoading] = useState(true)
+  const [contacting, setContacting] = useState(false)
+
+  const handleContact = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!token || !resume?.user_id || contacting) return
+    setContacting(true)
+    try {
+      const conv = await openConversationWithCandidate(token, resume.user_id)
+      router.push(`/employer/chat/${conv.id}`)
+    } catch (err) {
+      console.error('Не удалось открыть чат:', err)
+    } finally {
+      setContacting(false)
+    }
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,10 +66,8 @@ export const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) =
           <ArrowLeft size={22} />
         </button>
         <Button
-              onClick={(e) => {
-                e.stopPropagation()
-                router.push('/chat')
-              }}
+              onClick={handleContact}
+              disabled={contacting}
               className="flex  sm:hidden h-10 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground  items-center gap-1.5 text-base font-medium shrink-0 shadow-none"
             >
               <Mail size={16} />
@@ -88,10 +104,8 @@ export const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) =
               </div>
             </div>
              <Button
-              onClick={(e) => {
-                e.stopPropagation()
-                router.push('/chat')
-              }}
+              onClick={handleContact}
+              disabled={contacting}
               className="hidden  h-10 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground sm:flex items-center gap-1.5 text-base font-medium shrink-0 shadow-none"
             >
               <Mail size={16} />
