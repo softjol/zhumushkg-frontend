@@ -12,6 +12,8 @@ interface BottomNavProps {
 export const BottomNav = ({ navItems }: BottomNavProps) => {
   const pathname = usePathname()
 
+  if (/\/chat\/.+/.test(pathname ?? '')) return null
+
   return (
     // <nav className="w-full h-[72px] lg:hidden">
       <div className="lg:hidden  fixed bottom-0 left-0 right-0 bg-background border-t border-border z-30 px-2">

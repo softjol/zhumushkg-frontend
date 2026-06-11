@@ -12,7 +12,8 @@ export interface WorkExperience {
 export interface Resume {
   id: number
   user_id: number
-  category: string 
+  first_name?: string
+  category: string
   position: string
   description: string
   work_schedule: string

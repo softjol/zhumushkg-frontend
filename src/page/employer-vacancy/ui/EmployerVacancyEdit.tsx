@@ -41,6 +41,7 @@ export const EmployerVacancyEdit = ({ vacancyId }: EmployerVacancyEditProps) => 
   const router = useRouter()
   const [formData, setFormData] = useState<JobFormData | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [attempted, setAttempted] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [originalJob, setOriginalJob] = useState<Job | null>(null)
 
@@ -92,6 +93,7 @@ export const EmployerVacancyEdit = ({ vacancyId }: EmployerVacancyEditProps) => 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setAttempted(true)
     if (!isFormValid() || isSubmitting || !isChanged || !originalJob || !formData) return
 
     setIsSubmitting(true)
@@ -109,7 +111,7 @@ export const EmployerVacancyEdit = ({ vacancyId }: EmployerVacancyEditProps) => 
   if (isLoading) return null
   if (!formData) return null
 
-  const canSubmit = isFormValid() && isChanged && !isSubmitting
+  const canSubmit = isChanged && !isSubmitting
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)] lg:min-h-screen bg-background">
@@ -312,27 +314,32 @@ export const EmployerVacancyEdit = ({ vacancyId }: EmployerVacancyEditProps) => 
         </div>
 
         {/* Save Button */}
-        <div className=" bg-background lg:p-0">
-          <div className="flex flex-col items-center gap-2">
-            <Button
-              type="submit"
-              disabled={!canSubmit}
-              className={cn(
-                'w-full h-14 rounded-2xl text-lg font-bold transition-all duration-300 mb-10 lg:mb-0',
-                canSubmit
-                  ? 'bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed',
-              )}
-            >
-              {isSubmitting ? 'Сохранение...' : 'Сохранить изменения'}
-            </Button>
-
-            {!isFormValid() && (
-              <p className="text-center text-xs text-muted-foreground lg:hidden">
-                Заполните все обязательные поля, чтобы сохранить изменения
-              </p>
+        <div className="bg-background lg:p-0 flex flex-col items-center gap-2">
+          <Button
+            type="submit"
+            disabled={!canSubmit}
+            className={cn(
+              'w-full h-14 rounded-2xl text-lg font-bold transition-all duration-300 mb-4',
+              isFormValid()
+                ? 'bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white'
+                : 'bg-muted text-muted-foreground cursor-not-allowed',
             )}
-          </div>
+          >
+            {isSubmitting ? 'Сохранение...' : 'Сохранить изменения'}
+          </Button>
+          {attempted && !isFormValid() && (
+            <div className="text-sm text-destructive space-y-1 w-full mb-6">
+              <p className="font-medium">Заполните обязательные поля:</p>
+              {!formData.position && <p>• Название вакансии</p>}
+              {!formData.city && <p>• Город работы</p>}
+              {!formData.description && <p>• Обязанности</p>}
+              {!formData.work_schedule && <p>• График работы</p>}
+              {!formData.experience_work && <p>• Требуемый опыт</p>}
+              {!formData.payment_period && <p>• Период оплаты</p>}
+              {!(formData.salary_net > 0) && <p>• Зарплата</p>}
+              {!formData.company && <p>• Название компании</p>}
+            </div>
+          )}
         </div>
       </form>
     </div>

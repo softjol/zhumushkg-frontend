@@ -1,7 +1,7 @@
 import { useUserStore } from '@/entities/user/model/store'
 import { Job, JobFormData } from '../model/types'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const BASE_URL = '/api-proxy'
 
 function getAuthHeaders() {
   const { token } = useUserStore.getState()

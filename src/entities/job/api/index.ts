@@ -1,6 +1,6 @@
 import { Job } from '../model/types'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const BASE_URL = '/api-proxy'
 
 export interface VacancyParams {
   search?: string

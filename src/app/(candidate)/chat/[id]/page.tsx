@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { ChatDetailView } from '@/page/chat/ui/ChatDetailView'
 import { getConversations } from '@/entities/chat/api'
 import { getVacancy } from '@/entities/vacancy/api'
+import { getUserById } from '@/entities/user/api'
 import { useUserStore } from '@/entities/user/model/store'
 
 export default function ChatDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,7 +25,17 @@ export default function ChatDetailPage({ params }: { params: Promise<{ id: strin
         if (!conv) return
         setCandidateId(conv.candidate_id)
         setHrId(conv.hr_id)
-        if (!conv.vacancy_id) return
+        if (!conv.vacancy_id) {
+          if (conv.hr_id) {
+            try {
+              const profile = await getUserById(conv.hr_id, token)
+              setPosition(profile.firstName ?? 'Работодатель')
+            } catch {
+              setPosition('Работодатель')
+            }
+          }
+          return
+        }
         const vacancy = await getVacancy(conv.vacancy_id)
         setPosition(vacancy.position ?? '')
         setCompany(vacancy.company ?? '')

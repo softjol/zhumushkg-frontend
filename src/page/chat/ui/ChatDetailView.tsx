@@ -1,7 +1,7 @@
 'use client'
 import { ArrowLeft, MoreVertical, Send, CheckCheck } from 'lucide-react'
 import { Input } from '@/shared/ui/input'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import CompanyIcon from '@/features/company-icon/CompanyIcon'
 import { useUserStore } from '@/entities/user/model/store'
 import { useChat } from '@/entities/chat/model/useChat'
@@ -10,12 +10,13 @@ interface ChatDetailViewProps {
   chatId: string
   title?: string
   subtitle?: string
+  avatarName?: string
   onBack?: () => void
   candidateId?: number
   hrId?: number
 }
 
-export const ChatDetailView = ({ chatId, title, subtitle, onBack, candidateId, hrId }: ChatDetailViewProps) => {
+export const ChatDetailView = ({ chatId, title, subtitle, avatarName, onBack, candidateId, hrId }: ChatDetailViewProps) => {
   const { token, user } = useUserStore()
 
   // Определяем "свой" ID по роли в этом чате.
@@ -30,12 +31,14 @@ export const ChatDetailView = ({ chatId, title, subtitle, onBack, candidateId, h
   )
   const [message, setMessage] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const prevLengthRef = useRef(0)
 
-  // Автоскролл вниз когда приходят новые сообщения
-//   useEffect(() => {
-//     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-//   }, [messages])
-  console.log(messages)
+  useEffect(() => {
+    if (messages.length > prevLengthRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+    prevLengthRef.current = messages.length
+  }, [messages])
   const handleSend = async () => {
     if (!message.trim()) return
     await send(message)
@@ -55,7 +58,7 @@ export const ChatDetailView = ({ chatId, title, subtitle, onBack, candidateId, h
           </button>
         )}
         <div className="relative flex-shrink-0">
-          <CompanyIcon company={title ?? ''} className="h-12 w-12 text-base rounded-full" />
+          <CompanyIcon company={avatarName ?? title ?? ''} className="h-12 w-12 text-base rounded-full" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-bold text-base text-foreground truncate">{subtitle}</p>
@@ -72,9 +75,7 @@ export const ChatDetailView = ({ chatId, title, subtitle, onBack, candidateId, h
         {error && <p className="text-center text-destructive text-sm">{error}</p>}
         {messages.map((msg) => {
           const senderId = Number(msg.sender_id ?? msg.senderId)
-          const isMine = myIdInConversation != null
-            ? senderId === myIdInConversation
-            : senderId === Number(user?.id)
+          const isMine = senderId === Number(user?.id)
           return (
             <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
               <div
@@ -89,10 +90,12 @@ export const ChatDetailView = ({ chatId, title, subtitle, onBack, candidateId, h
                   className={`flex items-center justify-end gap-1 mt-1 ${isMine ? 'text-primary-foreground/70' : 'text-muted-foreground/60'}`}
                 >
                   <span className="text-[12px]">
-                    {new Date(msg.created_at ?? msg.createdAt ?? '').toLocaleTimeString('ru-RU', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {(msg.created_at ?? msg.createdAt)
+                      ? new Date(msg.created_at ?? msg.createdAt!).toLocaleTimeString('ru-RU', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : ''}
                   </span>
                   {isMine && <CheckCheck size={15} />}
                 </div>

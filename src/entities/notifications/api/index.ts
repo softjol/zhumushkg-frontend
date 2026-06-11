@@ -1,12 +1,12 @@
 import { useUserStore } from "@/entities/user/model/store"
 import { Notification } from "../model/type"
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const BASE_URL = '/api-proxy'
 
 export async function getNotifications(): Promise<Notification[]> {
-    const { user, token } = useUserStore.getState()
+    const { token } = useUserStore.getState()
 
-    const res = await fetch(`${BASE_URL}/notification/my/${user?.id}`, {
+    const res = await fetch(`${BASE_URL}/notification/my`, {
         method: 'GET',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
@@ -14,7 +14,8 @@ export async function getNotifications(): Promise<Notification[]> {
     if (!res.ok) {
         throw new Error('Не удалось получить уведомления')
     }
-    return res.json()
+    const json = await res.json()
+    return Array.isArray(json) ? json : (json.data ?? [])
 }
 
 export async function readNotification(id: number): Promise<void> {

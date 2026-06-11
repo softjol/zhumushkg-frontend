@@ -1,11 +1,12 @@
 'use client'
 
-import { ArrowLeft, Calendar, Mail, MapPin, Phone, User } from 'lucide-react'
+import { ArrowLeft, Calendar, Mail, MapPin, Phone } from 'lucide-react'
+import CompanyIcon from '@/features/company-icon/CompanyIcon'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getResume } from '@/entities/resume/api'
 import { Resume } from '@/entities/resume/model/types'
-import { getProfile } from '@/entities/user/api'
+import { getUserById } from '@/entities/user/api'
 import { openConversationWithCandidate } from '@/entities/chat/api'
 import { useUserStore } from '@/entities/user/model/store'
 import { CandidateDetailSkeleton } from './CandidateDetailSkeleton'
@@ -44,9 +45,10 @@ export const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) =
     const fetchData = async () => {
       try {
         const data = await getResume(candidateId)
-        const user = await getProfile(data.user_id)
         setResume(data)
-        setUserName(user.firstName)
+        getUserById(data.user_id, token)
+          .then((profile) => setUserName(profile.firstName ?? ''))
+          .catch(() => {})
       } catch (e) {
         console.error(e)
       } finally {
@@ -79,9 +81,7 @@ export const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) =
         <div className="bg-white rounded-3xl p-4 lg:p-6 flex flex-col gap-2  shadow-sm border border-slate-100">
           <div className="w-full flex justify-between ">
             <div className="flex flex-row gap-6 items-start w-full">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <User size={40} className="text-primary" />
-              </div>
+              <CompanyIcon company={userName || '?'} className="h-20 w-20 rounded-2xl text-3xl shrink-0" />
               <div className="space-y-2 flex-1">
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 mb-0.5">{userName}</h1>

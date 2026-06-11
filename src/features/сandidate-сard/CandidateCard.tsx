@@ -1,11 +1,12 @@
 'use client'
 import { Resume } from '@/entities/resume/model/types'
-import { getProfile } from '@/entities/user/api'
-import { User, useUserStore } from '@/entities/user/model/store'
+import { getUserById } from '@/entities/user/api'
+import { useUserStore } from '@/entities/user/model/store'
 import { openConversationWithCandidate } from '@/entities/chat/api'
 import { calculateAge } from '@/shared/lib/calculateAge'
 import { Button } from '@/shared/ui/button'
-import { MapPin, Mail, User as IconUser, Calendar, GraduationCap } from 'lucide-react'
+import CompanyIcon from '@/features/company-icon/CompanyIcon'
+import { MapPin, Mail, Calendar, GraduationCap } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -19,9 +20,14 @@ interface CandidateCardProps {
 export default function CandidateCard({ candidate }: CandidateCardProps) {
   const router = useRouter()
   const { token } = useUserStore()
-  const [profile, setProfile] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [candidateName, setCandidateName] = useState('')
   const [contacting, setContacting] = useState(false)
+
+  useEffect(() => {
+    getUserById(candidate.user_id, token)
+      .then((data) => setCandidateName(data.firstName ?? ''))
+      .catch(() => {})
+  }, [candidate.user_id, token])
 
   const handleContact = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -37,21 +43,6 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
     }
   }
 
-  useEffect(() => {
-    console.log(candidate)
-    const fetchData = async () => {
-      try {
-        const data = await getProfile(candidate.user_id)
-        setProfile(data ?? null)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchData()
-  }, [])
-
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return
     router.push(`/employer/candidates/${candidate.id}`)
@@ -66,22 +57,18 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
     >
       {/* Avatar — только на md+ виден отдельно слева */}
       <div className="hidden md:flex shrink-0 pt-0.5">
-        <div className="w-18 h-18 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
-          <IconUser size={32} />
-        </div>
+        <CompanyIcon company={candidateName || '?'} className="h-14 w-14 rounded-2xl text-xl" />
       </div>
 
       <div className="flex-1 min-w-0">
         {/* ── md и меньше: avatar + name/position в одном ряду ── */}
         <div className="flex md:hidden items-center gap-3 mb-3">
           <div className="shrink-0">
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
-              <IconUser size={28} />
-            </div>
+            <CompanyIcon company={candidateName || '?'} className="h-12 w-12 rounded-xl text-lg" />
           </div>
           <div className="min-w-0">
             <div className="text-base font-medium text-muted-foreground mb-0.5 truncate">
-              {profile?.firstName}
+              {candidateName}
             </div>
             <h3 className="text-lg font-medium text-black leading-tight">{candidate.position}</h3>
           </div>
@@ -91,7 +78,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
         <div className="hidden md:flex justify-between items-start gap-3">
           <div className="min-w-0">
             <div className="text-lg font-medium text-slate-800 mb-0.5 truncate">
-              {profile?.firstName}
+              {candidateName}
             </div>
             <h3 className="text-lg lg:text-xl font-semibold text-black leading-tight">
               {candidate.position}
@@ -205,10 +192,8 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
               )}
             </div>
             <Button
-              onClick={(e) => {
-                e.stopPropagation()
-                router.push('/chat')
-              }}
+              onClick={handleContact}
+              disabled={contacting}
               className="h-10 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-1.5 text-base font-medium shrink-0 shadow-none"
             >
               <Mail size={16} />

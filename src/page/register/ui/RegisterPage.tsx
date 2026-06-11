@@ -24,6 +24,7 @@ export const RegisterPage = () => {
   const [timer, setTimer] = useState(59)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [attempted, setAttempted] = useState(false)
 
   const isPhoneValid = phone.replace(/\D/g, '').length === 9
   const isNameValid = name.trim().length >= 2
@@ -43,15 +44,13 @@ export const RegisterPage = () => {
     }, 1000)
   }
 
-  const [smsCode, setSmsCode] = useState('')
-
   const handleSendCode = async () => {
+    setAttempted(true)
     if (!isFormValid) return
     setIsLoading(true)
     setError('')
     try {
-      const data = await registerUser(name.trim(), '+996' + phone, role)
-      if (data.smsCode) setSmsCode(data.smsCode)
+      await registerUser(name.trim(), '+996' + phone.replace(/\D/g, ''), role)
       setStep('otp')
       setOtp('')
       startTimer()
@@ -67,7 +66,7 @@ export const RegisterPage = () => {
     setIsLoading(true)
     setError('')
     try {
-      const token = await confirmPhone('+996' + phone, otp)
+      const token = await confirmPhone('+996' + phone.replace(/\D/g, ''), otp)
       setToken(token)
       if (role === 'JOB_SEEKER') router.push('/jobs')
       else router.push('/employer/candidates')
@@ -111,7 +110,7 @@ export const RegisterPage = () => {
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
                 Заполните данные для регистрации
               </p>
-              <div className="flex gap-4 sm:gap-7 mb-5">
+              <div className="flex gap-4 sm:gap-7 mb-1">
                 <div
                   onClick={() => setRole('JOB_SEEKER')}
                   className={`w-full bg-muted p-5 flex justify-center items-center text-base font-medium  cursor-pointer rounded-2xl shadow border-[2px] border-muted hover:border-primary transition duration-100 ${role === 'JOB_SEEKER' ? 'border-primary bg-primary/20' : ''}`}
@@ -125,14 +124,21 @@ export const RegisterPage = () => {
                   Ищу сотрудника
                 </div>
               </div>
+              {attempted && !isRoleValid && (
+                <p className="text-sm text-destructive mb-3">Выберите тип аккаунта</p>
+              )}
+
               <Input
                 type="text"
                 placeholder="Ваше имя"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="rounded-xl h-12 text-base bg-muted border-0 outline-none mb-3 pl-5"
+                className={`rounded-xl h-12 text-base bg-muted border-0 outline-none mb-1 pl-5 ${attempted && !isNameValid ? 'ring-2 ring-destructive' : ''}`}
                 maxLength={50}
               />
+              {attempted && !isNameValid && (
+                <p className="text-sm text-destructive mb-3">Введите ваше имя (минимум 2 символа)</p>
+              )}
 
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base font-medium text-foreground">
@@ -143,16 +149,19 @@ export const RegisterPage = () => {
                   placeholder="700 123 456"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="pl-14 rounded-xl h-12 text-base bg-muted border-0 outline-none"
+                  className={`pl-14 rounded-xl h-12 text-base bg-muted border-0 outline-none ${attempted && !isPhoneValid ? 'ring-2 ring-destructive' : ''}`}
                   maxLength={12}
                 />
               </div>
+              {attempted && !isPhoneValid && (
+                <p className="text-sm text-destructive mt-1">Введите корректный номер телефона (9 цифр)</p>
+              )}
 
               {error && <p className="text-sm text-destructive text-center mt-3">{error}</p>}
 
               <Button
                 className="w-full mt-4 rounded-2xl h-12 text-base"
-                disabled={!isFormValid || isLoading}
+                disabled={isLoading}
                 onClick={handleSendCode}
               >
                 {isLoading ? 'Отправка...' : 'Получить код'}
@@ -176,13 +185,7 @@ export const RegisterPage = () => {
             <form onSubmit={(e) => { e.preventDefault(); handleVerify(); }}>
               <h1 className="text-xl font-bold text-foreground text-center mb-2">Введите код</h1>
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
-                Код отправлен на +996 {phone}
-                {smsCode && (
-                  <>
-                    <br />
-                    (для тестирования: {smsCode})
-                  </>
-                )}
+                Код отправлен в WhatsApp на +996 {phone}
               </p>
 
               <div className="flex justify-center mb-4">

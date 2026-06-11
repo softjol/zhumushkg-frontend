@@ -34,6 +34,7 @@ export const EmployerVacancyCreate = () => {
   const router = useRouter()
   const [formData, setFormData] = useState<JobFormData>(INITIAL_FORM)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [attempted, setAttempted] = useState(false)
 
   const updateField = <K extends keyof JobFormData>(field: K, value: JobFormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -54,6 +55,7 @@ export const EmployerVacancyCreate = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setAttempted(true)
     if (!isFormValid() || isSubmitting) return
 
     setIsSubmitting(true)
@@ -268,19 +270,32 @@ export const EmployerVacancyCreate = () => {
         </div>
 
         {/* Submit Button */}
-        <div className=" lg:p-0">
+        <div className="lg:p-0 flex flex-col items-center gap-2">
           <Button
             type="submit"
-            disabled={!canSubmit}
+            disabled={isSubmitting}
             className={cn(
-              'w-full h-14 rounded-2xl text-lg font-bold transition-all duration-300 mb-10 lg:mb-0',
-              canSubmit
+              'w-full h-14 rounded-2xl text-lg font-bold transition-all duration-300 mb-4',
+              isFormValid()
                 ? 'bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white'
                 : 'bg-muted text-muted-foreground cursor-not-allowed',
             )}
           >
             {isSubmitting ? 'Публикация...' : 'Опубликовать вакансию'}
           </Button>
+          {attempted && !isFormValid() && (
+            <div className="text-sm text-destructive space-y-1 w-full mb-6">
+              <p className="font-medium">Заполните обязательные поля:</p>
+              {!formData.position && <p>• Название вакансии</p>}
+              {!formData.city && <p>• Город работы</p>}
+              {!formData.description && <p>• Обязанности</p>}
+              {!formData.work_schedule && <p>• График работы</p>}
+              {!formData.experience_work && <p>• Требуемый опыт</p>}
+              {!formData.payment_period && <p>• Период оплаты</p>}
+              {!(formData.salary_net > 0) && <p>• Зарплата</p>}
+              {!formData.company && <p>• Название компании</p>}
+            </div>
+          )}
         </div>
       </form>
     </div>

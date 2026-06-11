@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const BASE_URL = '/api-proxy'
 
 export interface ChatMessage {
   id: string
@@ -19,6 +19,7 @@ export interface Conversation {
   source?: string
   status?: string
   messages?: ChatMessage[]
+  last_message?: ChatMessage | string | null
   last_message_at?: string
   created_at?: string
   updated_at?: string
@@ -38,7 +39,8 @@ export async function getConversations(token: string): Promise<Conversation[]> {
     headers: authHeaders(token),
   })
   if (!res.ok) throw new Error('Ошибка загрузки чатов')
-  return res.json()
+  const json = await res.json()
+  return Array.isArray(json) ? json : (json.data ?? [])
 }
 
 export async function getMessages(
@@ -50,7 +52,8 @@ export async function getMessages(
     headers: authHeaders(token),
   })
   if (!res.ok) throw new Error('Ошибка загрузки сообщений')
-  return res.json()
+  const json = await res.json()
+  return Array.isArray(json) ? json : (json.data ?? json.messages ?? [])
 }
 
 export async function sendMessage(

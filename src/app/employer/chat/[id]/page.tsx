@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { ChatDetailView } from '@/page/chat/ui/ChatDetailView'
 import { getConversations } from '@/entities/chat/api'
 import { getVacancy } from '@/entities/vacancy/api'
+import { getUserById } from '@/entities/user/api'
 import { useUserStore } from '@/entities/user/model/store'
 
 export default function EmployerChatDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -12,7 +13,7 @@ export default function EmployerChatDetailPage({ params }: { params: Promise<{ i
   const { token } = useUserStore()
 
   const [position, setPosition] = useState('')
-  const [company, setCompany] = useState('')
+  const [candidateName, setCandidateName] = useState('')
   const [candidateId, setCandidateId] = useState<number | undefined>()
   const [hrId, setHrId] = useState<number | undefined>()
 
@@ -24,10 +25,14 @@ export default function EmployerChatDetailPage({ params }: { params: Promise<{ i
         if (!conv) return
         setCandidateId(conv.candidate_id)
         setHrId(conv.hr_id)
-        if (!conv.vacancy_id) return
-        const vacancy = await getVacancy(conv.vacancy_id)
-        setPosition(vacancy.position ?? '')
-        setCompany(vacancy.company ?? '')
+        if (conv.vacancy_id) {
+          const vacancy = await getVacancy(conv.vacancy_id)
+          setPosition(vacancy.position ?? '')
+        }
+        if (conv.candidate_id) {
+          const profile = await getUserById(conv.candidate_id, token)
+          setCandidateName(profile.firstName ?? '')
+        }
       })
       .catch(console.error)
   }, [token, id])
@@ -35,8 +40,9 @@ export default function EmployerChatDetailPage({ params }: { params: Promise<{ i
   return (
     <ChatDetailView
       chatId={id}
-      title={company}
-      subtitle={position}
+      title={position}
+      subtitle={candidateName}
+      avatarName={candidateName}
       onBack={() => router.push('/employer/chat')}
       candidateId={candidateId}
       hrId={hrId}

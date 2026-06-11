@@ -71,6 +71,7 @@ export const ResumeEditPage = () => {
   const router = useRouter()
   const { resume, setResume } = useResumeStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [attempted, setAttempted] = useState(false)
   const [formData, setFormData] = useState<FormState | null>(null)
 
   useEffect(() => {
@@ -153,6 +154,7 @@ export const ResumeEditPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setAttempted(true)
     if (!isFormValid() || isSubmitting || !resume || !formData || !isChanged) return
 
     setIsSubmitting(true)
@@ -178,7 +180,7 @@ export const ResumeEditPage = () => {
 
   if (!formData) return null
 
-  const canSubmit = isFormValid() && isChanged && !isSubmitting
+  const canSubmit = isChanged && !isSubmitting
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)] lg:min-h-screen bg-background">
@@ -505,8 +507,8 @@ export const ResumeEditPage = () => {
             type="submit"
             disabled={!canSubmit}
             className={cn(
-              'h-14 px-10 rounded-2xl text-base font-bold transition-all duration-300',
-              canSubmit
+              'h-14 px-10 rounded-2xl text-base font-bold transition-all duration-300 mb-4',
+              isFormValid()
                 ? 'bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white'
                 : 'bg-muted text-muted-foreground cursor-not-allowed',
             )}
@@ -514,10 +516,22 @@ export const ResumeEditPage = () => {
             {isSubmitting ? 'Сохранение...' : 'Сохранить изменения'}
           </Button>
 
-          {!isFormValid() && (
-            <p className="text-center text-xs text-muted-foreground lg:hidden">
-              Заполните все обязательные поля, чтобы сохранить изменения
-            </p>
+          {attempted && !isFormValid() && (
+            <div className="text-sm text-destructive space-y-1 w-full mb-6">
+              <p className="font-medium">Заполните обязательные поля:</p>
+              {!formData.position && <p>• Желаемая должность</p>}
+              {!formData.category && <p>• Категория</p>}
+              {!formData.work_schedule && <p>• График работы</p>}
+              {!formData.payment_period && <p>• Период оплаты</p>}
+              {!(formData.salary_net > 0) && <p>• Желаемая зарплата</p>}
+              {!formData.birth_date && <p>• Дата рождения</p>}
+              {!formData.phone_number && <p>• Телефон</p>}
+              {!formData.city && <p>• Город</p>}
+              {!formData.education && <p>• Образование</p>}
+              {!formData.description && <p>• О себе</p>}
+              {!formData.skills && <p>• Навыки</p>}
+              {!formData.personal_qualities && <p>• Личные качества</p>}
+            </div>
           )}
         </div>
       </form>

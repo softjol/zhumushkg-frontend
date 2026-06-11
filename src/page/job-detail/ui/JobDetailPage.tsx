@@ -68,7 +68,6 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
 
         const [jobData] = await Promise.all(promises)
         setJob(jobData)
-        console.log(jobData)
       } catch (e) {
         console.error(e)
       } finally {

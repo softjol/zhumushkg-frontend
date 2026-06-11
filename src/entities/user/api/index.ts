@@ -1,7 +1,17 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const BASE_URL = '/api-proxy'
 
-export async function getProfile(id: number) {
-  const res = await fetch(`${BASE_URL}/auth/profile/${id}`)
+export async function getUserById(id: number, token?: string | null) {
+  const res = await fetch(`${BASE_URL}/user/${id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+export async function getProfile(token?: string | null) {
+  const res = await fetch(`${BASE_URL}/auth/profile`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }

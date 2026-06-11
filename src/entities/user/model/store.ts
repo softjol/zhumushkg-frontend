@@ -76,7 +76,7 @@ export const useUserStore = create<UserStore>()(
         const { token, user } = get()
         if (!token || !user) return
         try {
-          const data = await getProfile(Number(user.id))
+          const data = await getProfile(token)
           set({
             user: {
               ...user,
@@ -86,7 +86,7 @@ export const useUserStore = create<UserStore>()(
             },
           })
         } catch {
-          get().logout()
+          // endpoint unavailable — keep existing JWT data, don't logout
         }
       },
 

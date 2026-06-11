@@ -8,10 +8,12 @@ import { useUserStore } from '@/entities/user/model/store'
 import { AuthRequired } from '@/widgets/auth-required/ui/AuthRequired'
 import { getConversations, Conversation } from '@/entities/chat/api'
 import { getVacancy } from '@/entities/vacancy/api'
+import { getUserById } from '@/entities/user/api'
 
 interface EnrichedConversation extends Conversation {
   vacancyTitle: string
   companyName: string
+  employerName: string
 }
 
 export default function ChatLayout({ children }: { children: React.ReactNode }) {
@@ -32,19 +34,26 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         const enriched = await Promise.all(
           data.map(async (conv): Promise<EnrichedConversation> => {
             if (!conv.vacancy_id) {
-              return { ...conv, vacancyTitle: '', companyName: '' }
+              let employerName = 'Работодатель'
+              if (conv.hr_id) {
+                try {
+                  const profile = await getUserById(conv.hr_id, token)
+                  employerName = profile.firstName ?? 'Работодатель'
+                } catch {}
+              }
+              return { ...conv, vacancyTitle: '', companyName: '', employerName }
             }
             try {
               const vacancy = await getVacancy(conv.vacancy_id)
-              console.log(`[Chat] Vacancy ${conv.vacancy_id}:`, vacancy)
               return {
                 ...conv,
                 vacancyTitle: vacancy.position ?? '',
                 companyName: vacancy.company ?? '',
+                employerName: vacancy.company ?? '',
               }
             } catch (e) {
               console.error(`[Chat] getVacancy(${conv.vacancy_id}) failed:`, e)
-              return { ...conv, vacancyTitle: '', companyName: '' }
+              return { ...conv, vacancyTitle: '', companyName: '', employerName: 'Работодатель' }
             }
           })
         )
@@ -53,10 +62,10 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       })
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [token])
+  }, [token, user?.id])
 
   const withMessages = conversations.filter(
-    (conv) => conv.candidate_id === Number(user?.id) && conv.messages && conv.messages.length > 0
+    (conv) => conv.candidate_id === Number(user?.id)
   )
 
   if (!isAuthenticated) {
@@ -71,7 +80,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="flex h-[calc(100vh-64px)] lg:h-screen overflow-hidden">
+    <div className={`flex ${activeId ? 'h-screen' : 'h-[calc(100vh-72px)]'} lg:h-screen overflow-hidden`}>
       {/* Список чатов */}
       <div className={`w-full lg:w-1/2 border-r border-border flex flex-col bg-background ${activeId ? 'hidden lg:flex' : 'flex'}`}>
         <div className="p-4 lg:p-6">
@@ -98,11 +107,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             </div>
           )}
           {withMessages.map((conv) => {
-            const lastMsg = conv.messages![conv.messages!.length - 1]
-            const lastText = lastMsg?.content ?? ''
-            const lastTime = (lastMsg?.created_at ?? lastMsg?.createdAt)
-              ? new Date(lastMsg.created_at ?? lastMsg.createdAt ?? '').toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-              : conv.last_message_at
+            const lastMsg = conv.messages?.[conv.messages.length - 1]
+            const rawLast = conv.last_message
+            const lastMessageText = typeof rawLast === 'string' ? rawLast : rawLast?.content ?? ''
+            const lastText = lastMsg?.content ?? lastMessageText
+            const lastTime = conv.last_message_at
               ? new Date(conv.last_message_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
               : ''
             const isActive = activeId === String(conv.id)
@@ -114,7 +123,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
               >
                 <div className="relative shrink-0">
-                  <CompanyIcon company={conv.companyName || conv.vacancyTitle} className="h-12 w-12 text-base rounded-full" />
+                  <CompanyIcon company={conv.employerName || conv.companyName || conv.vacancyTitle} className="h-12 w-12 text-base rounded-full" />
                   {conv.online && (
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-background" />
                   )}
@@ -122,7 +131,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className={`font-semibold text-base truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>
-                      {conv.vacancyTitle}
+                      {conv.vacancyTitle || conv.employerName}
                     </span>
                     <span className="text-xs text-muted-foreground ml-2">{lastTime}</span>
                   </div>
@@ -143,7 +152,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* Правая панель */}
-      <div className={`flex-1 bg-muted/10 ${!activeId ? 'hidden lg:block' : 'block'}`}>
+      <div className={`flex-1 flex flex-col bg-muted/10 ${!activeId ? 'hidden lg:flex' : 'flex'}`}>
         {children}
       </div>
     </div>

@@ -7,7 +7,7 @@ import CompanyIcon from '@/features/company-icon/CompanyIcon'
 import { useUserStore } from '@/entities/user/model/store'
 import { getConversations, Conversation } from '@/entities/chat/api'
 import { getVacancy } from '@/entities/vacancy/api'
-import { getProfile } from '@/entities/user/api'
+import { getUserById } from '@/entities/user/api'
 
 interface EnrichedConversation extends Conversation {
   vacancyTitle: string
@@ -32,16 +32,16 @@ export default function EmployerChatLayout({ children }: { children: React.React
         console.log('[EmployerChat] Conversations from backend:', data)
 
         const withMessages = data.filter(
-          (c) => c.hr_id === Number(user?.id) && c.messages && c.messages.length > 0
+          (c) => c.hr_id === Number(user?.id)
         )
 
         const enriched = await Promise.all(
           withMessages.map(async (conv): Promise<EnrichedConversation> => {
-            const lastMsg = conv.messages![conv.messages!.length - 1]
-            const lastText = lastMsg?.content ?? ''
-            const lastTime = (lastMsg?.created_at ?? lastMsg?.createdAt)
-              ? new Date(lastMsg.created_at ?? lastMsg.createdAt ?? '').toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-              : conv.last_message_at
+            const lastMsg = conv.messages?.[conv.messages.length - 1]
+            const rawLast = conv.last_message
+            const lastMessageText = typeof rawLast === 'string' ? rawLast : rawLast?.content ?? ''
+            const lastText = lastMsg?.content ?? lastMessageText
+            const lastTime = conv.last_message_at
               ? new Date(conv.last_message_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
               : ''
 
@@ -59,11 +59,11 @@ export default function EmployerChatLayout({ children }: { children: React.React
 
             try {
               if (conv.candidate_id) {
-                const profile = await getProfile(conv.candidate_id)
+                const profile = await getUserById(conv.candidate_id, token)
                 candidateName = profile.firstName ?? 'Соискатель'
               }
             } catch (e) {
-              console.error('[EmployerChat] getProfile failed:', e)
+              console.error('[EmployerChat] getUserById failed:', e)
             }
 
             return { ...conv, vacancyTitle, candidateName, lastText, lastTime }
@@ -74,10 +74,10 @@ export default function EmployerChatLayout({ children }: { children: React.React
       })
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [token])
+  }, [token, user?.id])
 
   return (
-    <div className="flex h-[calc(100vh-64px)] lg:h-screen overflow-hidden">
+    <div className={`flex ${activeId ? 'h-screen' : 'h-[calc(100vh-72px)]'} lg:h-screen overflow-hidden`}>
       {/* Список чатов */}
       <div className={`w-full lg:w-1/2 border-r border-border flex flex-col bg-background ${activeId ? 'hidden lg:flex' : 'flex'}`}>
         <div className="p-4 lg:p-6">
@@ -141,7 +141,7 @@ export default function EmployerChatLayout({ children }: { children: React.React
       </div>
 
       {/* Правая панель */}
-      <div className={`flex-1 bg-muted/10 ${!activeId ? 'hidden lg:block' : 'block'}`}>
+      <div className={`flex-1 flex flex-col bg-muted/10 ${!activeId ? 'hidden lg:flex' : 'flex'}`}>
         {children}
       </div>
     </div>

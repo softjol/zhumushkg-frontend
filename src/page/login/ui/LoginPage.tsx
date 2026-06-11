@@ -22,6 +22,7 @@ export const LoginPage = () => {
   const [timer, setTimer] = useState(59)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [attempted, setAttempted] = useState(false)
 
   const isPhoneValid = phone.replace(/\D/g, '').length === 9
 
@@ -38,15 +39,13 @@ export const LoginPage = () => {
     }, 1000)
   }
 
-  const [smsCode, setSmsCode] = useState('')
-
   const handleSendCode = async () => {
+    setAttempted(true)
     if (!isPhoneValid) return
     setIsLoading(true)
     setError('')
     try {
-      const data = await loginUser('+996' + phone)
-      if (data.smsCode) setSmsCode(data.smsCode)
+      await loginUser('+996' + phone.replace(/\D/g, ''))
       setStep('otp')
       setOtp('')
       startTimer()
@@ -62,7 +61,7 @@ export const LoginPage = () => {
     setIsLoading(true)
     setError('')
     try {
-      const token = await confirmPhone('+996' + phone, otp)
+      const token = await confirmPhone('+996' + phone.replace(/\D/g, ''), otp)
       setToken(token)
 
       const { user } = useUserStore.getState()
@@ -109,7 +108,7 @@ export const LoginPage = () => {
                 Войти в аккаунт
               </h1>
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
-                Отправим SMS с кодом подтверждения
+                Отправим код подтверждения в WhatsApp
               </p>
 
               <div className="relative">
@@ -121,16 +120,19 @@ export const LoginPage = () => {
                   placeholder="700 123 456"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="pl-14 rounded-xl h-12 text-base bg-muted border-0 outline-none"
+                  className={`pl-14 rounded-xl h-12 text-base bg-muted border-0 outline-none ${attempted && !isPhoneValid ? 'ring-2 ring-destructive' : ''}`}
                   maxLength={12}
                 />
               </div>
+              {attempted && !isPhoneValid && (
+                <p className="text-sm text-destructive mt-1">Введите корректный номер телефона (9 цифр)</p>
+              )}
 
               {error && <p className="text-sm text-destructive text-center mt-3">{error}</p>}
 
               <Button
                 className="w-full mt-4 rounded-2xl h-12 text-base"
-                disabled={!isPhoneValid || isLoading}
+                disabled={isLoading}
                 onClick={handleSendCode}
               >
                 {isLoading ? 'Отправка...' : 'Получить код'}
@@ -154,13 +156,7 @@ export const LoginPage = () => {
             <form onSubmit={(e) => { e.preventDefault(); handleVerify(); }}>
               <h1 className="text-xl font-bold text-foreground text-center mb-2">Введите код</h1>
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
-                Код отправлен на +996 {phone}
-                {smsCode && (
-                  <>
-                    <br />
-                    (для тестирования: {smsCode})
-                  </>
-                )}
+                Код отправлен в WhatsApp на +996 {phone}
               </p>
 
               <div className="flex justify-center mb-4">

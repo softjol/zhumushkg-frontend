@@ -53,6 +53,7 @@ export const ResumeCreatePage = () => {
   const { user } = useUserStore.getState()
   const { setResume } = useResumeStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [attempted, setAttempted] = useState(false)
   const EMPTY_DATA: Omit<FormState, 'user_id'> = {
     position: '',
     category: '',
@@ -132,6 +133,7 @@ export const ResumeCreatePage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setAttempted(true)
     if (!isFormValid() || isSubmitting) return
 
     setIsSubmitting(true)
@@ -491,9 +493,9 @@ export const ResumeCreatePage = () => {
           <Button
             onClick={handleSubmit}
             type="submit"
-            disabled={!isFormValid() || isSubmitting}
+            disabled={isSubmitting}
             className={cn(
-              'h-14 px-10 rounded-2xl text-base font-bold transition-all duration-300 mb-10',
+              'h-14 px-10 rounded-2xl text-base font-bold transition-all duration-300 mb-4',
               isFormValid()
                 ? 'bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white'
                 : 'bg-muted text-muted-foreground cursor-not-allowed',
@@ -501,10 +503,23 @@ export const ResumeCreatePage = () => {
           >
             {isSubmitting ? 'Создание...' : 'Создать резюме'}
           </Button>
-          {!isFormValid() && (
-            <p className="text-center text-xs text-muted-foreground lg:hidden">
-              Заполните все обязательные поля, чтобы создать резюме
-            </p>
+          {attempted && !isFormValid() && (
+            <div className="text-sm text-destructive space-y-1 w-full mb-6">
+              <p className="font-medium">Заполните обязательные поля:</p>
+              {!formData.position && <p>• Желаемая должность</p>}
+              {!formData.category && <p>• Категория</p>}
+              {!formData.work_schedule && <p>• График работы</p>}
+              {formData.work_experience.length === 0 && <p>• Опыт работы (добавьте хотя бы один)</p>}
+              {!formData.payment_period && <p>• Период оплаты</p>}
+              {!(formData.salary_net > 0) && <p>• Желаемая зарплата</p>}
+              {!formData.birth_date && <p>• Дата рождения</p>}
+              {!formData.phone_number && <p>• Телефон</p>}
+              {!formData.city && <p>• Город</p>}
+              {!formData.education && <p>• Образование</p>}
+              {!formData.description && <p>• О себе</p>}
+              {!formData.skills && <p>• Навыки</p>}
+              {!formData.personal_qualities && <p>• Личные качества</p>}
+            </div>
           )}
         </div>
       </div>

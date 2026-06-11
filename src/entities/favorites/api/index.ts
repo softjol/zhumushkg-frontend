@@ -1,7 +1,7 @@
 import { useUserStore } from '@/entities/user/model/store'
 import { FavoriteItem } from '../model/type'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const BASE_URL = '/api-proxy'
 
 export async function addToFavorites(vacancyId: number): Promise<FavoriteItem> {
   const { token } = useUserStore.getState()

@@ -1,4 +1,4 @@
-export const BASE_URL = 'https://zhumushkg-backend-git-dev-amirbeks-projects-b11ee92a.vercel.app';
+export const BASE_URL = '/api-proxy';
 
 export async function apiRequest<T>(
   path: string,

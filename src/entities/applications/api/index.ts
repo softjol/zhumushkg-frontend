@@ -1,7 +1,7 @@
 import { useUserStore } from '@/entities/user/model/store'
 import { Application, VacancyCandidate } from '../model/type'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const BASE_URL = '/api-proxy'
 
 interface VacancyApplyData {
   vacancy_id: number

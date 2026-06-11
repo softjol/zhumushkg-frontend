@@ -116,7 +116,7 @@ export default function TestimonialsSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('https://zhumushkg-backend-git-dev-amirbeks-projects-b11ee92a.vercel.app/landing/reviews')
+    fetch('/api-proxy/landing/reviews')
       .then((r) => r.json())
       .then((data: Review[]) => {
         if (Array.isArray(data) && data.length > 0) setReviews(data);
