@@ -317,13 +317,13 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
           >
             {applied ? 'Вы откликнулись ✓' : 'Откликнуться'}
           </Button>
-          {/* <Button
+          <Button
             variant="outline"
             className="hidden md:block flex-1 rounded-2xl h-12"
             onClick={handleChat}
           >
             Написать
-          </Button> */}
+          </Button>
         </div>
       </div>
     </div>
