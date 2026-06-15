@@ -31,6 +31,15 @@ export async function confirmPhone(phoneNumber: string, code: string): Promise<s
   return data.access_token
 }
 
+export async function refreshToken(): Promise<string> {
+  const res = await fetch(`${BASE_URL}/auth/refresh`, {
+    method: 'POST',
+  })
+  if (!res.ok) throw new Error('Refresh failed')
+  const data = await res.json()
+  return data.access_token
+}
+
 export async function loginUser(phoneNumber: string) {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',

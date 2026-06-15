@@ -149,7 +149,7 @@ export const ApplicationsPage = () => {
             <p className="font-semibold text-foreground">Вы ещё не откликались</p>
             <p className="text-sm text-muted-foreground mt-1">на вакансии</p>
             <Button asChild className="mt-6 rounded-xl">
-              <Link href="/">Найти вакансии</Link>
+              <Link href="/jobs">Найти вакансии</Link>
             </Button>
           </div>
         )

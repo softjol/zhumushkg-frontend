@@ -77,13 +77,13 @@ export default function EmployerChatLayout({ children }: { children: React.React
   }, [token, user?.id])
 
   return (
-    <div className={`flex ${activeId ? 'h-screen' : 'h-[calc(100vh-72px)]'} lg:h-screen overflow-hidden`}>
+    <div className={`flex ${activeId ? 'h-svh' : 'h-[calc(100svh-72px)]'} lg:h-svh overflow-hidden`}>
       {/* Список чатов */}
       <div className={`w-full lg:w-1/2 border-r border-border flex flex-col bg-background ${activeId ? 'hidden lg:flex' : 'flex'}`}>
         <div className="p-4 lg:p-6">
           <h1 className="text-xl font-bold text-foreground">Чаты</h1>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 lg:p-3 space-y-1">
+        <div className="flex-1 overflow-y-auto p-2 lg:p-3 space-y-2">
           {loading && Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 p-3 rounded-2xl animate-pulse">
               <div className="shrink-0 h-12 w-12 rounded-full bg-muted" />
@@ -109,7 +109,7 @@ export default function EmployerChatLayout({ children }: { children: React.React
               <Link
                 key={conv.id}
                 href={`/employer/chat/${conv.id}`}
-                className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
+                className={`flex items-center gap-3 p-3 rounded-2xl transition-all bg-muted/50 ${isActive ? 'bg-primary/20 text-primary shadow-md' : 'hover:bg-muted'}`}
               >
                 <div className="relative shrink-0">
                   <CompanyIcon company={conv.candidateName} className="h-12 w-12 text-base rounded-full" />

@@ -27,8 +27,14 @@ export async function getVacancies(params?: VacancyParams): Promise<Job[]> {
   return res.json()
 }
 
-export async function getVacancyById(id: number): Promise<Job> {
+export async function getVacancyById(id: number): Promise<Job | null> {
   const res = await fetch(`${BASE_URL}/vacancy/${id}`)
-  if (!res.ok) throw new Error('Вакансия не найдена')
-  return res.json()
+  if (!res.ok) return null
+  const text = await res.text()
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
+  }
 }

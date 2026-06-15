@@ -2,7 +2,6 @@
 import { Resume } from '@/entities/resume/model/types'
 import { getUserById } from '@/entities/user/api'
 import { useUserStore } from '@/entities/user/model/store'
-import { openConversationWithCandidate } from '@/entities/chat/api'
 import { calculateAge } from '@/shared/lib/calculateAge'
 import { Button } from '@/shared/ui/button'
 import CompanyIcon from '@/features/company-icon/CompanyIcon'
@@ -21,26 +20,15 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
   const router = useRouter()
   const { token } = useUserStore()
   const [candidateName, setCandidateName] = useState('')
-  const [contacting, setContacting] = useState(false)
-
   useEffect(() => {
     getUserById(candidate.user_id, token)
       .then((data) => setCandidateName(data.firstName ?? ''))
       .catch(() => {})
   }, [candidate.user_id, token])
 
-  const handleContact = async (e: React.MouseEvent) => {
+  const handleContact = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!token || contacting) return
-    setContacting(true)
-    try {
-      const conv = await openConversationWithCandidate(token, candidate.user_id)
-      router.push(`/employer/chat/${conv.id}`)
-    } catch (err) {
-      console.error('Не удалось открыть чат:', err)
-    } finally {
-      setContacting(false)
-    }
+    router.push(`/employer/chat/new?candidateId=${candidate.user_id}`)
   }
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -149,7 +137,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
           )}
           <Button
             onClick={handleContact}
-            disabled={contacting}
+
             className="h-10 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-1.5 text-base font-medium shrink-0 shadow-none"
           >
             <Mail size={16} />
@@ -193,7 +181,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
             </div>
             <Button
               onClick={handleContact}
-              disabled={contacting}
+  
               className="h-10 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-1.5 text-base font-medium shrink-0 shadow-none"
             >
               <Mail size={16} />

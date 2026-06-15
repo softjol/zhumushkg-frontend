@@ -21,10 +21,12 @@ export function useChat(token: string | null, conversationId: string, userId: st
   }
 
   useEffect(() => {
+    if (!conversationId) {
+      setLoading(false)
+      return
+    }
     fetchMessages()
-
     intervalRef.current = setInterval(fetchMessages, 3000)
-
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }

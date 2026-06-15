@@ -9,7 +9,6 @@ import { Job as Vacancy } from '@/entities/vacancy/model/types'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { EmployerVacancyCardSkeleton } from './EmployerVacancyCardSkeleton'
 
-
 export const EmployerVacanciesPage = () => {
   const [activeTab, setActiveTab] = useState('active')
   const router = useRouter()
@@ -50,7 +49,7 @@ export const EmployerVacanciesPage = () => {
               <Skeleton className="h-4 w-32 rounded-lg" />
             ) : (
               <>
-                <span className="text-sm lg:text-base text-muted-foreground font-medium">
+                {/* <span className="text-sm lg:text-base text-muted-foreground font-medium">
                   {vacancies?.length} из 3 бесплатных
                 </span>
                 <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -58,7 +57,7 @@ export const EmployerVacanciesPage = () => {
                     className="h-full bg-primary rounded-full transition-all"
                     style={{ width: `${((vacancies?.length ?? 0) / 3) * 100}%` }}
                   />
-                </div>
+                </div> */}
               </>
             )}
           </div>

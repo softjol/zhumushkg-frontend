@@ -1,6 +1,6 @@
 'use client'
 import { use, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ChatDetailView } from '@/page/chat/ui/ChatDetailView'
 import { getConversations } from '@/entities/chat/api'
 import { getVacancy } from '@/entities/vacancy/api'
@@ -10,6 +10,7 @@ import { useUserStore } from '@/entities/user/model/store'
 export default function EmployerChatDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { token } = useUserStore()
 
   const [position, setPosition] = useState('')
@@ -17,7 +18,18 @@ export default function EmployerChatDetailPage({ params }: { params: Promise<{ i
   const [candidateId, setCandidateId] = useState<number | undefined>()
   const [hrId, setHrId] = useState<number | undefined>()
 
+  const isPending = id === 'new'
+  const pendingCandidateId = isPending ? Number(searchParams.get('candidateId')) || undefined : undefined
+
   useEffect(() => {
+    if (isPending) {
+      if (pendingCandidateId && token) {
+        getUserById(pendingCandidateId, token)
+          .then((profile) => setCandidateName(profile.firstName ?? ''))
+          .catch(() => {})
+      }
+      return
+    }
     if (!token) return
     getConversations(token)
       .then(async (data) => {
@@ -35,7 +47,7 @@ export default function EmployerChatDetailPage({ params }: { params: Promise<{ i
         }
       })
       .catch(console.error)
-  }, [token, id])
+  }, [token, id, isPending, pendingCandidateId])
 
   return (
     <ChatDetailView
@@ -46,6 +58,7 @@ export default function EmployerChatDetailPage({ params }: { params: Promise<{ i
       onBack={() => router.push('/employer/chat')}
       candidateId={candidateId}
       hrId={hrId}
+      pendingCandidateId={pendingCandidateId}
     />
   )
 }

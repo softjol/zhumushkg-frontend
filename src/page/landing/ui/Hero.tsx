@@ -81,11 +81,11 @@ export default function Hero() {
       <div className="relative z-10 max-w-[1440px] mx-auto px-5 md:px-10 w-full py-16 md:py-24 flex flex-col md:flex-row items-start md:items-center gap-8 md:gap-0">
         <div className="flex-1 max-w-[560px]">
           <h1 className="text-[28px] sm:text-4xl md:text-5xl lg:text-[56px] font-bold text-white leading-[1.1] tracking-tight mb-4">
-            Платформа, которая соединяет работодателей{' '}
-            <span className="text-[#A083F7]">и соискателей по всему Кыргызстану</span>
+            Работа и вакансии в Бишкеке{' '}
+            <span className="text-[#A083F7]">и по всему Кыргызстану</span>
           </h1>
           <p className="text-white/50 text-sm md:text-base mb-8 leading-relaxed max-w-sm">
-            Платформа, которая соединяет работодателей и соискателей быстро и удобно
+            Жумуш.кг — платформа, которая соединяет работодателей и соискателей быстро и удобно
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/register" >

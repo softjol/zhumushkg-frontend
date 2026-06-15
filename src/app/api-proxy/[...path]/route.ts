@@ -15,6 +15,9 @@ async function proxy(req: NextRequest, pathSegments: string[]) {
   const authorization = req.headers.get('authorization')
   if (authorization) headers.set('authorization', authorization)
 
+  const cookie = req.headers.get('cookie')
+  if (cookie) headers.set('cookie', cookie)
+
   const isBodyMethod = !['GET', 'HEAD'].includes(req.method)
   const body = isBodyMethod ? await req.arrayBuffer() : undefined
 

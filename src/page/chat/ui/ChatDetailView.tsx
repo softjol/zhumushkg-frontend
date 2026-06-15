@@ -1,10 +1,12 @@
 'use client'
-import { ArrowLeft, MoreVertical, Send, CheckCheck } from 'lucide-react'
+import { ArrowLeft, Send, CheckCheck } from 'lucide-react'
 import { Input } from '@/shared/ui/input'
 import { useState, useRef, useEffect } from 'react'
 import CompanyIcon from '@/features/company-icon/CompanyIcon'
 import { useUserStore } from '@/entities/user/model/store'
 import { useChat } from '@/entities/chat/model/useChat'
+import { openConversationWithCandidate, sendMessage } from '@/entities/chat/api'
+import { useRouter } from 'next/navigation'
 
 interface ChatDetailViewProps {
   chatId: string
@@ -14,22 +16,23 @@ interface ChatDetailViewProps {
   onBack?: () => void
   candidateId?: number
   hrId?: number
+  pendingCandidateId?: number
 }
 
-export const ChatDetailView = ({ chatId, title, subtitle, avatarName, onBack, candidateId, hrId }: ChatDetailViewProps) => {
+export const ChatDetailView = ({ chatId, title, subtitle, avatarName, onBack, candidateId, hrId, pendingCandidateId }: ChatDetailViewProps) => {
   const { token, user } = useUserStore()
+  const router = useRouter()
 
-  // Определяем "свой" ID по роли в этом чате.
-  // Когда кандидат и работодатель — один человек, user.id одинаковый,
-  // поэтому используем candidate_id / hr_id из conversation.
+  const isPending = chatId === 'new'
   const myIdInConversation = user?.role === 'EMPLOYER' ? hrId : candidateId
 
   const { messages, loading, error, send } = useChat(
-    token,
-    chatId,
-    myIdInConversation != null ? String(myIdInConversation) : user?.id ?? null,
+    isPending ? null : token,
+    isPending ? '' : chatId,
+    isPending ? null : (myIdInConversation != null ? String(myIdInConversation) : user?.id ?? null),
   )
   const [message, setMessage] = useState('')
+  const [sending, setSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const prevLengthRef = useRef(0)
 
@@ -39,8 +42,22 @@ export const ChatDetailView = ({ chatId, title, subtitle, avatarName, onBack, ca
     }
     prevLengthRef.current = messages.length
   }, [messages])
+
   const handleSend = async () => {
-    if (!message.trim()) return
+    if (!message.trim() || sending) return
+    if (isPending && pendingCandidateId != null && token) {
+      setSending(true)
+      try {
+        const conv = await openConversationWithCandidate(token, pendingCandidateId)
+        await sendMessage(token, String(conv.id), message)
+        router.push(`/employer/chat/${conv.id}`)
+      } catch (err) {
+        console.error('Ошибка отправки:', err)
+        setSending(false)
+      }
+      setMessage('')
+      return
+    }
     await send(message)
     setMessage('')
   }
@@ -64,9 +81,6 @@ export const ChatDetailView = ({ chatId, title, subtitle, avatarName, onBack, ca
           <p className="font-bold text-base text-foreground truncate">{subtitle}</p>
           <p className="text-base text-muted-foreground truncate">{title}</p>
         </div>
-        <button className="p-2 rounded-xl hover:bg-muted">
-          <MoreVertical size={21} className="text-muted-foreground" />
-        </button>
       </header>
 
       {/* Messages */}
@@ -114,14 +128,15 @@ export const ChatDetailView = ({ chatId, title, subtitle, avatarName, onBack, ca
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            autoComplete="off"
             className="px-5 bg-transparent border-none rounded-xl flex-1 h-12 bg-muted outline-none"
           />
           <button
             onClick={handleSend}
-            disabled={!message.trim()}
+            disabled={!message.trim() || sending}
             className="p-2.5 h-12 w-12 flex justify-center items-center rounded-xl bg-primary text-primary-foreground disabled:opacity-50 transition-all shadow-sm active:scale-95"
           >
-            <Send size={22} />
+            <Send size={22} className='mr-[2px]'/>
           </button>
         </div>
       </div>

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs'
+import { cn } from '@/shared/lib/utils'
 import { ArrowLeft } from 'lucide-react'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/shared/ui/input-otp'
 import iconLogo from '@/assets/icons/Logo.svg'
@@ -19,17 +21,15 @@ export const RegisterPage = () => {
   const [step, setStep] = useState<'phone' | 'otp'>('phone')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [role, setRole] = useState<'JOB_SEEKER' | 'EMPLOYER' | ''>('')
+  const [role, setRole] = useState<'JOB_SEEKER' | 'EMPLOYER' | ''>('JOB_SEEKER')
   const [otp, setOtp] = useState('')
   const [timer, setTimer] = useState(59)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [attempted, setAttempted] = useState(false)
 
   const isPhoneValid = phone.replace(/\D/g, '').length === 9
   const isNameValid = name.trim().length >= 2
-  const isRoleValid = role !== ''
-  const isFormValid = isPhoneValid && isNameValid && isRoleValid
+  const isFormValid = isPhoneValid && isNameValid && role !== ''
 
   const startTimer = () => {
     setTimer(59)
@@ -45,7 +45,6 @@ export const RegisterPage = () => {
   }
 
   const handleSendCode = async () => {
-    setAttempted(true)
     if (!isFormValid) return
     setIsLoading(true)
     setError('')
@@ -110,35 +109,38 @@ export const RegisterPage = () => {
               <p className="text-sm font-medium text-muted-foreground text-center mb-6">
                 Заполните данные для регистрации
               </p>
-              <div className="flex gap-4 sm:gap-7 mb-1">
-                <div
-                  onClick={() => setRole('JOB_SEEKER')}
-                  className={`w-full bg-muted p-5 flex justify-center items-center text-base font-medium  cursor-pointer rounded-2xl shadow border-[2px] border-muted hover:border-primary transition duration-100 ${role === 'JOB_SEEKER' ? 'border-primary bg-primary/20' : ''}`}
-                >
-                  Ищу работу
-                </div>
-                <div
-                  onClick={() => setRole('EMPLOYER')}
-                  className={`w-full bg-muted p-5 text-center text-base font-medium cursor-pointer rounded-2xl shadow border-[2px] border-muted hover:border-primary transition duration-100 ${role === 'EMPLOYER' ? 'border-primary bg-primary/20' : ''}`}
-                >
-                  Ищу сотрудника
-                </div>
-              </div>
-              {attempted && !isRoleValid && (
-                <p className="text-sm text-destructive mb-3">Выберите тип аккаунта</p>
-              )}
-
+              <Tabs value={role} onValueChange={(v) => setRole(v as 'JOB_SEEKER' | 'EMPLOYER')} className="mb-1">
+                <TabsList className="w-full h-auto rounded-2xl bg-muted p-1 gap-1">
+                  <TabsTrigger
+                    value="JOB_SEEKER"
+                    className={cn(
+                      'flex-1 rounded-2xl py-2.5 text-sm font-medium transition-all',
+                      'data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+                      'data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground',
+                    )}
+                  >
+                    Ищу работу
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="EMPLOYER"
+                    className={cn(
+                      'flex-1 rounded-2xl py-2.5 text-sm font-medium transition-all',
+                      'data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+                      'data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground',
+                    )}
+                  >
+                    Ищу сотрудника
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               <Input
                 type="text"
                 placeholder="Ваше имя"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={`rounded-xl h-12 text-base bg-muted border-0 outline-none mb-1 pl-5 ${attempted && !isNameValid ? 'ring-2 ring-destructive' : ''}`}
+                className="rounded-xl h-12 text-base bg-muted border-0 outline-none my-3 pl-5"
                 maxLength={50}
               />
-              {attempted && !isNameValid && (
-                <p className="text-sm text-destructive mb-3">Введите ваше имя (минимум 2 символа)</p>
-              )}
 
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base font-medium text-foreground">
@@ -149,19 +151,16 @@ export const RegisterPage = () => {
                   placeholder="700 123 456"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className={`pl-14 rounded-xl h-12 text-base bg-muted border-0 outline-none ${attempted && !isPhoneValid ? 'ring-2 ring-destructive' : ''}`}
+                  className="pl-14 rounded-xl h-12 text-base bg-muted border-0 outline-none"
                   maxLength={12}
                 />
               </div>
-              {attempted && !isPhoneValid && (
-                <p className="text-sm text-destructive mt-1">Введите корректный номер телефона (9 цифр)</p>
-              )}
 
               {error && <p className="text-sm text-destructive text-center mt-3">{error}</p>}
 
               <Button
                 className="w-full mt-4 rounded-2xl h-12 text-base"
-                disabled={isLoading}
+                disabled={isLoading || !isFormValid}
                 onClick={handleSendCode}
               >
                 {isLoading ? 'Отправка...' : 'Получить код'}

@@ -54,9 +54,15 @@ export const Footer = () => {
               Работа в Кыргызстане
             </p>
             <div className="flex items-center gap-4 mt-6">
-              <Image src={instaLogo} alt="Instagram" className="w-9 h-9" />
-              <Image src={whatsappLogo} alt="WhatsApp" className="w-9 h-9" />
-              <Image src={telegramLogo} alt="Telegram" className="w-9 h-9" />
+              <a href="https://www.instagram.com/softjol_tech" target="_blank" rel="noopener noreferrer">
+                <Image src={instaLogo} alt="Instagram" className="w-9 h-9" />
+              </a>
+              <a href="https://wa.me/996777380432" target="_blank" rel="noopener noreferrer">
+                <Image src={whatsappLogo} alt="WhatsApp" className="w-9 h-9" />
+              </a>
+              <a href="https://t.me/amirbek_amiraev" target="_blank" rel="noopener noreferrer">
+                <Image src={telegramLogo} alt="Telegram" className="w-9 h-9" />
+              </a>
             </div>
           </div>
 

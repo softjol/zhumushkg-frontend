@@ -7,7 +7,6 @@ import { useEffect, useState } from 'react'
 import { getResume } from '@/entities/resume/api'
 import { Resume } from '@/entities/resume/model/types'
 import { getUserById } from '@/entities/user/api'
-import { openConversationWithCandidate } from '@/entities/chat/api'
 import { useUserStore } from '@/entities/user/model/store'
 import { CandidateDetailSkeleton } from './CandidateDetailSkeleton'
 import { calculateAge } from '@/shared/lib/calculateAge'
@@ -25,20 +24,11 @@ export const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) =
   const [resume, setResume] = useState<Resume | null>(null)
   const [userName, setUserName] = useState('')
   const [loading, setLoading] = useState(true)
-  const [contacting, setContacting] = useState(false)
 
-  const handleContact = async (e: React.MouseEvent) => {
+  const handleContact = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!token || !resume?.user_id || contacting) return
-    setContacting(true)
-    try {
-      const conv = await openConversationWithCandidate(token, resume.user_id)
-      router.push(`/employer/chat/${conv.id}`)
-    } catch (err) {
-      console.error('Не удалось открыть чат:', err)
-    } finally {
-      setContacting(false)
-    }
+    if (!resume?.user_id) return
+    router.push(`/employer/chat/new?candidateId=${resume.user_id}`)
   }
 
   useEffect(() => {
@@ -69,7 +59,7 @@ export const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) =
         </button>
         <Button
               onClick={handleContact}
-              disabled={contacting}
+              disabled={!resume?.user_id}
               className="flex  sm:hidden h-10 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground  items-center gap-1.5 text-base font-medium shrink-0 shadow-none"
             >
               <Mail size={16} />
@@ -105,7 +95,7 @@ export const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) =
             </div>
              <Button
               onClick={handleContact}
-              disabled={contacting}
+              disabled={!resume?.user_id}
               className="hidden  h-10 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground sm:flex items-center gap-1.5 text-base font-medium shrink-0 shadow-none"
             >
               <Mail size={16} />

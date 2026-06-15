@@ -22,7 +22,6 @@ export const LoginPage = () => {
   const [timer, setTimer] = useState(59)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [attempted, setAttempted] = useState(false)
 
   const isPhoneValid = phone.replace(/\D/g, '').length === 9
 
@@ -40,7 +39,6 @@ export const LoginPage = () => {
   }
 
   const handleSendCode = async () => {
-    setAttempted(true)
     if (!isPhoneValid) return
     setIsLoading(true)
     setError('')
@@ -120,19 +118,16 @@ export const LoginPage = () => {
                   placeholder="700 123 456"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className={`pl-14 rounded-xl h-12 text-base bg-muted border-0 outline-none ${attempted && !isPhoneValid ? 'ring-2 ring-destructive' : ''}`}
+                  className="pl-14 rounded-xl h-12 text-base bg-muted border-0 outline-none"
                   maxLength={12}
                 />
               </div>
-              {attempted && !isPhoneValid && (
-                <p className="text-sm text-destructive mt-1">Введите корректный номер телефона (9 цифр)</p>
-              )}
 
               {error && <p className="text-sm text-destructive text-center mt-3">{error}</p>}
 
               <Button
                 className="w-full mt-4 rounded-2xl h-12 text-base"
-                disabled={isLoading}
+                disabled={isLoading || !isPhoneValid}
                 onClick={handleSendCode}
               >
                 {isLoading ? 'Отправка...' : 'Получить код'}

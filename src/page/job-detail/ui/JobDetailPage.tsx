@@ -67,9 +67,9 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
         }
 
         const [jobData] = await Promise.all(promises)
-        setJob(jobData)
-      } catch (e) {
-        console.error(e)
+        setJob(jobData ?? null)
+      } catch {
+        // vacancy not found or network error — stay null, show not-found UI
       } finally {
         setLoading(false)
       }
@@ -165,7 +165,7 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
         <p className="text-base text-muted-foreground mt-1">
           Возможно, она была закрыта или удалена
         </p>
-        <Button className="mt-6 rounded-xl" onClick={() => router.push('/')}>
+        <Button className="mt-6 rounded-xl" onClick={() => router.push('/jobs')}>
           Посмотреть другие вакансии
         </Button>
       </div>
@@ -245,7 +245,7 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
           <div className=" flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-2">
             <div className="flex items-center gap-2">
               <CompanyIcon company={job.company} />
-              <span className="text-lg font-medium text-muted-foreground">{job.company}</span>
+              <span className="text-lg font-medium text-muted-foreground flex">{job.company}</span>
             </div>
             <div className="w-full flex items-center gap-3 justify-between sm:justify-start lg:justify-end">
               <span className="text-sm font-medium text-muted-foreground lg:order-2">
@@ -317,13 +317,13 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
           >
             {applied ? 'Вы откликнулись ✓' : 'Откликнуться'}
           </Button>
-          <Button
+          {/* <Button
             variant="outline"
             className="hidden md:block flex-1 rounded-2xl h-12"
             onClick={handleChat}
           >
             Написать
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { jwtDecode } from 'jwt-decode'
 import { getProfile } from '../api'
+import { refreshToken } from '@/entities/auth/api'
 
 export interface User {
   id: string
@@ -105,11 +106,14 @@ export const useUserStore = create<UserStore>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return
         if (state.token && isTokenExpired(state.token)) {
-          state.logout()
-        } else if (state.token) {
-          state.fetchProfile()
+          refreshToken()
+            .then((newToken) => state.setToken(newToken))
+            .catch(() => state.logout())
+            .finally(() => state.setIsLoading(false))
+        } else {
+          if (state.token) state.fetchProfile()
+          state.setIsLoading(false)
         }
-        state.setIsLoading(false)
       },
     },
   ),

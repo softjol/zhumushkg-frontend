@@ -131,6 +131,9 @@ export const ResumeCreatePage = () => {
     )
   }
 
+  const err = (invalid: boolean) =>
+    attempted && invalid ? 'border-red-400 ring-1 ring-red-400' : ''
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setAttempted(true)
@@ -190,7 +193,7 @@ export const ResumeCreatePage = () => {
               placeholder="Например, Node.js Developer"
               value={formData.position}
               onChange={(e) => updateField('position', e.target.value)}
-              className="text-base h-12"
+              className={cn('text-base h-12', err(!formData.position))}
             />
           </div>
 
@@ -201,7 +204,7 @@ export const ResumeCreatePage = () => {
                 value={formData.work_schedule}
                 onValueChange={(v) => updateField('work_schedule', v)}
               >
-                <SelectTrigger className="text-base h-12">
+                <SelectTrigger className={cn('text-base h-12', err(!formData.work_schedule))}>
                   <SelectValue placeholder="Выберите график" />
                 </SelectTrigger>
                 <SelectContent>
@@ -217,7 +220,7 @@ export const ResumeCreatePage = () => {
                 value={formData.payment_period}
                 onValueChange={(v) => updateField('payment_period', v)}
               >
-                <SelectTrigger className="text-base h-12">
+                <SelectTrigger className={cn('text-base h-12', err(!formData.payment_period))}>
                   <SelectValue placeholder="Выберите период" />
                 </SelectTrigger>
                 <SelectContent>
@@ -236,7 +239,7 @@ export const ResumeCreatePage = () => {
               <Input
                 id="salary"
                 type="number"
-                className="text-base h-12"
+                className={cn('text-base h-12', err(!(formData.salary_net > 0)))}
                 value={formData.salary_net || ''}
                 onChange={(e) => updateField('salary_net', Number(e.target.value))}
               />
@@ -244,7 +247,7 @@ export const ResumeCreatePage = () => {
             <div className="space-y-2">
               <Label className="text-base">Категория</Label>
               <Select value={formData.category} onValueChange={(v) => updateField('category', v)}>
-                <SelectTrigger className="text-base h-12">
+                <SelectTrigger className={cn('text-base h-12', err(!formData.category))}>
                   <SelectValue placeholder="Выберите категорию" />
                 </SelectTrigger>
                 <SelectContent>
@@ -270,7 +273,7 @@ export const ResumeCreatePage = () => {
               <Input
                 id="birth_date"
                 type="date"
-                className="text-base h-12"
+                className={cn('text-base h-12', err(!formData.birth_date))}
                 value={formData.birth_date}
                 onChange={(e) => updateField('birth_date', e.target.value)}
               />
@@ -282,7 +285,7 @@ export const ResumeCreatePage = () => {
               <Input
                 id="phone"
                 placeholder="+996..."
-                className="text-base h-12"
+                className={cn('text-base h-12', err(!formData.phone_number))}
                 value={formData.phone_number}
                 onChange={(e) => updateField('phone_number', e.target.value)}
               />
@@ -296,7 +299,7 @@ export const ResumeCreatePage = () => {
               <Input
                 id="city"
                 placeholder="Бишкек"
-                className="text-base h-12"
+                className={cn('text-base h-12', err(!formData.city))}
                 value={formData.city}
                 onChange={(e) => updateField('city', e.target.value)}
               />
@@ -308,7 +311,7 @@ export const ResumeCreatePage = () => {
               <Input
                 id="education"
                 placeholder="Высшее, КГТУ"
-                className="text-base h-12"
+                className={cn('text-base h-12', err(!formData.education))}
                 value={formData.education}
                 onChange={(e) => updateField('education', e.target.value)}
               />
@@ -320,7 +323,12 @@ export const ResumeCreatePage = () => {
         <div className="space-y-6 border-t pt-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold">Опыт работы</h3>
-            <Button type="button" variant="outline" onClick={addExperience} className="rounded-2xl">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addExperience}
+              className={cn('rounded-2xl', err(formData.work_experience.length === 0))}
+            >
               <Plus size={20} className="mr-1" /> Добавить
             </Button>
           </div>
@@ -441,7 +449,7 @@ export const ResumeCreatePage = () => {
                   placeholder="Чем занимались?"
                   value={exp.description}
                   onChange={(e) => updateExperience(index, 'description', e.target.value)}
-                  className="min-h-[120px] bg-background border-primary/20 focus-visible:ring-primary text-base"
+                  className="min-h-30 bg-background border-primary/20 focus-visible:ring-primary text-base"
                 />
               </div>
             </div>
@@ -457,7 +465,7 @@ export const ResumeCreatePage = () => {
             <Input
               id="skills"
               placeholder="JavaScript, React, NestJS..."
-              className="text-base h-12"
+              className={cn('text-base h-12', err(!formData.skills))}
               value={formData.skills}
               onChange={(e) => updateField('skills', e.target.value)}
             />
@@ -469,7 +477,7 @@ export const ResumeCreatePage = () => {
             <Input
               id="qualities"
               placeholder="Ответственность, коммуникабельность..."
-              className="text-base h-12"
+              className={cn('text-base h-12', err(!formData.personal_qualities))}
               value={formData.personal_qualities}
               onChange={(e) => updateField('personal_qualities', e.target.value)}
             />
@@ -483,7 +491,7 @@ export const ResumeCreatePage = () => {
               placeholder="Расскажите о себе..."
               value={formData.description}
               onChange={(e) => updateField('description', e.target.value)}
-              className="min-h-[140px] text-base"
+              className={cn('min-h-35 text-base', err(!formData.description))}
             />
           </div>
         </div>
@@ -494,33 +502,10 @@ export const ResumeCreatePage = () => {
             onClick={handleSubmit}
             type="submit"
             disabled={isSubmitting}
-            className={cn(
-              'h-14 px-10 rounded-2xl text-base font-bold transition-all duration-300 mb-4',
-              isFormValid()
-                ? 'bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white'
-                : 'bg-muted text-muted-foreground cursor-not-allowed',
-            )}
+            className="h-14 px-10 rounded-2xl text-base font-bold shadow-lg shadow-primary/20 mb-4"
           >
             {isSubmitting ? 'Создание...' : 'Создать резюме'}
           </Button>
-          {attempted && !isFormValid() && (
-            <div className="text-sm text-destructive space-y-1 w-full mb-6">
-              <p className="font-medium">Заполните обязательные поля:</p>
-              {!formData.position && <p>• Желаемая должность</p>}
-              {!formData.category && <p>• Категория</p>}
-              {!formData.work_schedule && <p>• График работы</p>}
-              {formData.work_experience.length === 0 && <p>• Опыт работы (добавьте хотя бы один)</p>}
-              {!formData.payment_period && <p>• Период оплаты</p>}
-              {!(formData.salary_net > 0) && <p>• Желаемая зарплата</p>}
-              {!formData.birth_date && <p>• Дата рождения</p>}
-              {!formData.phone_number && <p>• Телефон</p>}
-              {!formData.city && <p>• Город</p>}
-              {!formData.education && <p>• Образование</p>}
-              {!formData.description && <p>• О себе</p>}
-              {!formData.skills && <p>• Навыки</p>}
-              {!formData.personal_qualities && <p>• Личные качества</p>}
-            </div>
-          )}
         </div>
       </div>
     </div>

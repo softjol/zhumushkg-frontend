@@ -35,7 +35,7 @@ export const FavoritesPage = () => {
   }, [isAuthenticated])
 
   return (
-    <div className="px-4 lg:px-6 py-4 lg:py-6 h-screen bg-muted">
+    <div className="px-4 lg:px-6 py-4 lg:py-6 min-h-screen bg-muted">
       <h1 className="text-xl font-bold text-foreground mb-4">Избранное</h1>
 
       {isLoading || (isAuthenticated && !hasFetched) ? (
