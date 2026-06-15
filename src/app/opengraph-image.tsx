@@ -5,10 +5,6 @@ export const contentType = 'image/png'
 export const alt = 'Жумуш.kg — работа в Кыргызстане'
 
 export default async function OgImage() {
-  const fontData = await fetch(new URL('./Manrope-Bold.ttf', import.meta.url)).then((r) =>
-    r.arrayBuffer()
-  )
-
   return new ImageResponse(
     (
       <div
@@ -20,7 +16,7 @@ export default async function OgImage() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: 'Manrope',
+          fontFamily: 'sans-serif',
           position: 'relative',
         }}
       >
@@ -73,9 +69,6 @@ export default async function OgImage() {
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: [{ name: 'Manrope', data: fontData, weight: 700, style: 'normal' }],
-    }
+    size
   )
 }
