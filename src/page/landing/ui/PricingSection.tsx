@@ -53,7 +53,7 @@ const PricingSection: React.FC = () => {
         
         <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-12 gap-4">
           <h2 className="text-[28px] md:text-[48px] font-bold text-[#1A1A1A] leading-[1.1] max-w-2xl">
-            Выберите <span className="text-[#9DA3AE]">уровень видимости</span> — получите больше откликов
+            Выберите <span className="text-[#9DA3AE]">уровень видимости</span> - получите больше откликов
           </h2>
           <p className="text-[#9DA3AE] text-lg font-medium">Выберите подходящий</p>
         </div>

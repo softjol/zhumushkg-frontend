@@ -214,7 +214,7 @@ export const ResumePage = () => {
                       <p className="text-primary font-medium text-base mt-1">{exp.company}</p>
                     </div>
                     <span className="text-slate-400 text-sm">
-                      {getMonthName(exp.end_month)} {exp.end_year} —{' '}
+                      {getMonthName(exp.end_month)} {exp.end_year} -{' '}
                       {exp.until_now
                         ? 'по настоящее время'
                         : `${getMonthName(exp.start_month)} ${exp.start_year}`}

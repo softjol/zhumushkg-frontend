@@ -106,7 +106,7 @@ export default function VacanciesPage() {
                 <tr key={v.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-4 py-4 pl-5 text-sm text-gray-400 font-mono">{v.id}</td>
                   <td className="px-4 py-4 text-sm font-medium text-gray-900">{v.position}</td>
-                  <td className="px-4 py-4 text-sm text-gray-600">{v.company || '—'}</td>
+                  <td className="px-4 py-4 text-sm text-gray-600">{v.company || '-'}</td>
                   <td className="px-4 py-4 text-sm text-gray-600 font-medium">
                     {v.salary_net ? `${v.salary_net.toLocaleString()} сом` : 'Не указана'}
                   </td>

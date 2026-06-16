@@ -145,7 +145,7 @@ const handleConfirm = async () => {
                         <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
                         <div className="text-xs text-gray-500">{user.email}</div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{user.phoneNumber || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{user.phoneNumber || '-'}</td>
                       <td className="px-6 py-4">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                           user.role === 'employer' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'

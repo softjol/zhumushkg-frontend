@@ -85,7 +85,7 @@ export default function Hero() {
             <span className="text-[#A083F7]">и по всему Кыргызстану</span>
           </h1>
           <p className="text-white/50 text-sm md:text-base mb-8 leading-relaxed max-w-sm">
-            Жумуш.кг — платформа, которая соединяет работодателей и соискателей быстро и удобно
+            Жумуш.кг - платформа, которая соединяет работодателей и соискателей быстро и удобно
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/register" >

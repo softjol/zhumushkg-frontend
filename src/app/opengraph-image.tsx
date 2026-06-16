@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
-export const alt = 'Жумуш.kg — работа в Кыргызстане'
+export const alt = 'Жумуш.kg - поиск работы и подбор персонала в Кыргызстане'
 
 export default async function OgImage() {
   return new ImageResponse(
@@ -64,7 +64,7 @@ export default async function OgImage() {
               letterSpacing: 1,
             }}
           >
-            Работа и вакансии в Кыргызстане
+            Поиск работы и подбор персонала в Кыргызстане
           </div>
         </div>
       </div>
