@@ -8,18 +8,25 @@ import { getNotifications, readAllNotifications } from '@/entities/notifications
 import { Notification } from '@/entities/notifications/model/type'
 import { useNotificationStore } from '@/entities/notifications/model/store'
 import { NotificationComponent } from './NotificationComponent'
+import { useUserStore } from '@/entities/user/model/store'
+import { AuthRequired } from '@/widgets/auth-required/ui/AuthRequired'
 
 export const NotificationsPage = () => {
   const [notifications, setNotifications] = useState<Notification[] | null>()
   const [loading, setLoading] = useState(true)
   const [readingAll, setReadingAll] = useState(false)
   const { setHasUnread } = useNotificationStore()
+  const { isAuthenticated, isLoading: authLoading } = useUserStore()
 
   useEffect(() => {
+    if (authLoading) return
+    if (!isAuthenticated) {
+      setLoading(false)
+      return
+    }
     const fetchNotifications = async () => {
       try {
         const data = await getNotifications()
-        console.log(data)
         setNotifications(data)
       } catch (error) {
         console.log('Ошибка при загрузке уведомлений:', error)
@@ -28,7 +35,7 @@ export const NotificationsPage = () => {
       }
     }
     fetchNotifications()
-  }, [])
+  }, [isAuthenticated, authLoading])
 
   const handleReadAll = async () => {
     const unread = notifications?.filter((n) => !n.isRead) ?? []
@@ -43,6 +50,22 @@ export const NotificationsPage = () => {
     } finally {
       setReadingAll(false)
     }
+  }
+
+  if (!loading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
+          <Link href={'/jobs'}>
+            <button className="p-1.5 rounded-xl hover:bg-muted">
+              <ArrowLeft size={22} />
+            </button>
+          </Link>
+          <span className="flex-1 font-semibold">Уведомления</span>
+        </header>
+        <AuthRequired description="Войдите, чтобы видеть уведомления" />
+      </div>
+    )
   }
 
   if (loading) {

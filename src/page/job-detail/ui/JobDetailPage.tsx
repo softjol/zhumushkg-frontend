@@ -245,7 +245,7 @@ export const JobDetailPage = ({ jobId }: JobDetailPageProps) => {
           <div className=" flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-2">
             <div className="flex items-center gap-2">
               <CompanyIcon company={job.company} />
-              <span className="text-lg font-medium text-muted-foreground flex">{job.company}</span>
+              <span className="text-lg font-medium text-muted-foreground whitespace-nowrap">{job.company}</span>
             </div>
             <div className="w-full flex items-center gap-3 justify-between sm:justify-start lg:justify-end">
               <span className="text-sm font-medium text-muted-foreground lg:order-2">

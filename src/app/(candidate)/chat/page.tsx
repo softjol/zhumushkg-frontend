@@ -1,6 +1,17 @@
+'use client'
 import { MessageCircle } from 'lucide-react'
+import { useUserStore } from '@/entities/user/model/store'
+import { AuthRequired } from '@/widgets/auth-required/ui/AuthRequired'
 
 export default function ChatPage() {
+  const { isAuthenticated, isLoading } = useUserStore()
+
+  if (isLoading) return null
+
+  if (!isAuthenticated) {
+    return <AuthRequired description="Войдите, чтобы начать общение" />
+  }
+
   return (
     <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
       <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">

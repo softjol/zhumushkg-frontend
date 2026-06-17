@@ -14,11 +14,12 @@ import { useNotificationStore } from '@/entities/notifications/model/store'
 
 export function Header() {
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const { isAuthenticated, user } = useUserStore()
+  const { isAuthenticated, isLoading: authLoading, user } = useUserStore()
   const { hasUnread, setHasUnread } = useNotificationStore()
   const router = useRouter()
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return
     const fetchNotifications = async () => {
       try {
         const data = await getNotifications()
@@ -28,7 +29,7 @@ export function Header() {
       }
     }
     fetchNotifications()
-  }, [])
+  }, [isAuthenticated, authLoading])
 
   const handleNotificationClick = () => {
     if (!isAuthenticated) {
