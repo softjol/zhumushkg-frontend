@@ -15,7 +15,7 @@ function getPageNumbers(current: number, total: number, delta: number): (number 
 
   const pages: (number | '...')[] = []
   const rangeStart = Math.max(2, current - delta)
-  const rangeEnd = Math.min(total - 1, current + delta)
+  const rangeEnd = Math.min(total - 1, Math.max(current + delta, rangeStart + 1))
 
   pages.push(1)
   if (rangeStart > 2) pages.push('...')
